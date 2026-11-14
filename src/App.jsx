@@ -1,0 +1,268 @@
+import React, { useState, useEffect } from 'react';
+import Navbar from './components/Navbar';
+import Dashboard from './components/Dashboard';
+import ActiveWorkout from './components/ActiveWorkout';
+import Analytics from './components/Analytics';
+import QuotesManager from './components/QuotesManager';
+import PhaseSelectorModal from './components/PhaseSelectorModal';
+import AuthModal from './components/AuthModal';
+
+import { 
+  supabase, 
+  isSupabaseConfigured,
+  getLocalProfile, 
+  saveLocalProfile,
+  getActiveSessionLocal,
+  getCompletedSessions,
+  saveCompletedSession,
+  getQuotes,
+  addQuote,
+  deleteQuote
+} from './lib/supabase';
+import { SYSTEM_WORKOUTS } from './lib/workoutData';
+
+export default function App() {
+  // Estado de Autenticação
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // Navegação
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'workout' | 'analytics' | 'quotes'
+  const [activeWorkout, setActiveWorkout] = useState(null);
+  const [isPhaseModalOpen, setIsPhaseModalOpen] = useState(false);
+
+  // Dados
+  const [quotes, setQuotes] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [notification, setNotification] = useState(null);
+
+  // Exibe notificação temporária
+  const showToast = (msg, type = 'success') => {
+    setNotification({ msg, type });
+    setTimeout(() => setNotification(null), 3500);
+  };
+
+  // Inicializa Autenticação e Sessão
+  useEffect(() => {
+    const initAuth = async () => {
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            setUser(session.user);
+            // Busca profile no Supabase
+            const { data: prof } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+
+            setProfile(prof || getLocalProfile(session.user.id));
+          }
+        } catch (e) {
+          console.warn('Erro ao carregar sessão remota:', e);
+        }
+      }
+
+      // Se não autenticado via Supabase, carrega criador local padrão
+      const savedLocal = localStorage.getItem('luquitasgym_creator_logged');
+      if (savedLocal === 'true') {
+        const localProf = getLocalProfile('local-creator');
+        setUser({ id: 'local-creator', email: 'lucas@gym.local' });
+        setProfile(localProf);
+      }
+
+      setAuthChecked(true);
+    };
+
+    initAuth();
+  }, []);
+
+  // Carrega Frases e Histórico quando o usuário estiver ativo
+  useEffect(() => {
+    if (!user) return;
+
+    const loadData = async () => {
+      const q = await getQuotes(user.id);
+      setQuotes(q);
+
+      const sess = await getCompletedSessions(user.id);
+      setSessions(sess);
+
+      // Verifica se havia um treino em andamento não finalizado (Anti-queda de sinal)
+      const cachedSession = getActiveSessionLocal(user.id);
+      if (cachedSession && cachedSession.workout_id) {
+        const found = SYSTEM_WORKOUTS.find(w => w.id === cachedSession.workout_id);
+        if (found) {
+          setActiveWorkout(found);
+          setActiveTab('workout');
+          showToast('Sessão ativa restaurada do cache local!', 'info');
+        }
+      }
+    };
+
+    loadData();
+  }, [user]);
+
+  // Login com sucesso
+  const handleLoginSuccess = (authUser) => {
+    setUser(authUser);
+    localStorage.setItem('luquitasgym_creator_logged', 'true');
+    const prof = getLocalProfile(authUser.id);
+    setProfile(prof);
+    showToast(`Bem-vindo ao LuquitasGym!`, 'success');
+  };
+
+  // Logout
+  const handleLogout = async () => {
+    if (isSupabaseConfigured && supabase) {
+      await supabase.auth.signOut();
+    }
+    localStorage.removeItem('luquitasgym_creator_logged');
+    setUser(null);
+    setProfile(null);
+    setActiveWorkout(null);
+    setActiveTab('dashboard');
+  };
+
+  // Alterar Fase Atual de Retorno
+  const handleSelectPhase = async (newPhaseId) => {
+    const updated = {
+      ...profile,
+      current_phase: newPhaseId,
+      updated_at: new Date().toISOString()
+    };
+    setProfile(updated);
+    saveLocalProfile(user.id, updated);
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase
+          .from('profiles')
+          .update({ current_phase: newPhaseId })
+          .eq('id', user.id);
+      } catch (e) {}
+    }
+
+    showToast(`Fase atualizada com sucesso!`, 'success');
+  };
+
+  // Iniciar Treino
+  const handleStartWorkout = (workout) => {
+    setActiveWorkout(workout);
+    setActiveTab('workout');
+  };
+
+  // Cancelar Treino
+  const handleCancelWorkout = () => {
+    const confirmCancel = window.confirm('Deseja realmente sair do treino em andamento? O progresso não salvo será descartado.');
+    if (confirmCancel) {
+      setActiveWorkout(null);
+      setActiveTab('dashboard');
+    }
+  };
+
+  // Finalizar e Salvar Treino
+  const handleFinishWorkout = async (sessionPayload) => {
+    const res = await saveCompletedSession(user.id, sessionPayload);
+    // Recarrega lista de sessões
+    const updatedSess = await getCompletedSessions(user.id);
+    setSessions(updatedSess);
+
+    setActiveWorkout(null);
+    setActiveTab('dashboard');
+    showToast('🔥 Treino concluído e salvo com sucesso!', 'success');
+  };
+
+  // Frases
+  const handleAddQuote = async (text) => {
+    const q = await addQuote(user.id, text);
+    setQuotes(prev => [q, ...prev]);
+  };
+
+  const handleDeleteQuote = async (quoteId) => {
+    await deleteQuote(user.id, quoteId);
+    setQuotes(prev => prev.filter(q => q.id !== quoteId));
+    showToast('Frase removida.', 'info');
+  };
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-[#0F0F12] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#10B981] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthModal onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  return (
+    <div className="min-h-screen bg-[#0F0F12] text-[#F4F4F5] flex flex-col selection:bg-[#10B981] selection:text-black">
+      {/* Toast Notificação */}
+      {notification && (
+        <div className="fixed bottom-6 right-6 z-50 bg-[#18181C] border border-[#10B981] text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 animate-bounce">
+          <span className="w-2 h-2 rounded-full bg-[#10B981]" />
+          <span className="text-xs font-bold">{notification.msg}</span>
+        </div>
+      )}
+
+      {/* Navbar Superior */}
+      <Navbar
+        user={user}
+        profile={profile}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onOpenPhaseSelector={() => setIsPhaseModalOpen(true)}
+        onLogout={handleLogout}
+      />
+
+      {/* Conteúdo Principal */}
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-6">
+        {activeTab === 'dashboard' && (
+          <Dashboard
+            userProfile={profile}
+            quotes={quotes}
+            sessions={sessions}
+            onStartWorkout={handleStartWorkout}
+            onOpenPhaseSelector={() => setIsPhaseModalOpen(true)}
+            onOpenQuotesManager={() => setActiveTab('quotes')}
+          />
+        )}
+
+        {activeTab === 'workout' && activeWorkout && (
+          <ActiveWorkout
+            workout={activeWorkout}
+            userProfile={profile}
+            quotes={quotes}
+            previousSessions={sessions}
+            onFinishWorkout={handleFinishWorkout}
+            onCancelWorkout={handleCancelWorkout}
+          />
+        )}
+
+        {activeTab === 'analytics' && (
+          <Analytics sessions={sessions} />
+        )}
+
+        {activeTab === 'quotes' && (
+          <QuotesManager
+            quotes={quotes}
+            onAddQuote={handleAddQuote}
+            onDeleteQuote={handleDeleteQuote}
+          />
+        )}
+      </main>
+
+      {/* Modal de Seleção de Fase */}
+      <PhaseSelectorModal
+        isOpen={isPhaseModalOpen}
+        onClose={() => setIsPhaseModalOpen(false)}
+        currentPhaseId={profile?.current_phase || 'week_1'}
+        onSelectPhase={handleSelectPhase}
+      />
+    </div>
+  );
+}
