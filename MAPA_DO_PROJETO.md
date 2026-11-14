@@ -4,6 +4,7 @@
 | Arquivo | Responsabilidade / Descricao Essencial |
 | :--- | :--- |
 | `README.md` | Documentação geral, stack, guia de execução e arquitetura. |
+| `vercel.json` | Configuração de roteamento SPA e rewrites para deploy na Vercel. |
 | `AGENTS.md` | Protocolo Universal de Governança de Agentes & Economia Extrema de Tokens. |
 | `MAPA_DO_PROJETO.md` | Inventário arquitetural e rastreamento de arquivos do repositório. |
 | `.gitignore` | Regras de exclusão do Git (node_modules, dist, .env). |
