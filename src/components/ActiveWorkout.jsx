@@ -174,9 +174,9 @@ export default function ActiveWorkout({
   };
 
   return (
-    <div className="max-w-4xl mx-auto pb-24 space-y-5 animate-fadeIn">
+    <div className="max-w-4xl w-full mx-auto pb-24 space-y-4 sm:space-y-5 animate-fadeIn overflow-x-hidden">
       {/* Top Header Fixo com Tempo e Ações */}
-      <div className="sticky top-16 z-30 bg-[#0F0F12]/95 backdrop-blur border-b border-[#2A2A32] -mx-4 px-4 py-3 flex items-center justify-between">
+      <div className="sticky top-14 sm:top-16 z-30 bg-[#0F0F12]/95 backdrop-blur border-b border-[#2A2A32] py-2.5 px-2 sm:px-4 flex items-center justify-between rounded-xl">
         <button
           onClick={onCancelWorkout}
           className="flex items-center gap-1.5 text-xs text-gym-muted hover:text-white transition-colors"

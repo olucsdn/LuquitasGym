@@ -92,7 +92,7 @@ export default function Dashboard({
   }, [sessions]);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-5 sm:space-y-6 animate-fadeIn pb-12">
+    <div className="max-w-4xl w-full mx-auto space-y-5 sm:space-y-6 animate-fadeIn pb-12 overflow-x-hidden">
       {/* 1. Banner de Impacto (Hardcore Mindset) */}
       <div className="bg-[#18181C] border border-[#2A2A32] border-l-4 border-l-[#F97316] rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden">
         <div className="flex items-center justify-between gap-3 mb-2">
