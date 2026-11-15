@@ -250,7 +250,7 @@ export default function App() {
       />
 
       {/* Conteúdo Principal */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-6">
+      <main className="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-20 md:pb-6">
         {activeTab === 'dashboard' && (
           <Dashboard
             userProfile={profile}

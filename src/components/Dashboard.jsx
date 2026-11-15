@@ -28,21 +28,22 @@ export default function Dashboard({
     setQuoteIndex(prev => prev + 1);
   };
 
-  // Identificação do Treino de Hoje (JavaScript: 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sab)
+  // Identificação do Dia e Seletor de Qualquer Dia da Semana
   const todayDayNumber = new Date().getDay();
-  // Se for domingo (0), sugere descanso ou Treino de Segunda (1)
   const defaultTodayIndex = todayDayNumber === 0 ? 1 : todayDayNumber;
-  const todaysWorkout = SYSTEM_WORKOUTS.find(w => w.day_of_week === defaultTodayIndex) || SYSTEM_WORKOUTS[0];
+  const [selectedDayNumber, setSelectedDayNumber] = useState(defaultTodayIndex);
+
+  const selectedWorkout = SYSTEM_WORKOUTS.find(w => w.day_of_week === selectedDayNumber) || SYSTEM_WORKOUTS[0];
 
   // Checagem de disponibilidade da Terça-feira com base na fase
-  const isTuesday = todaysWorkout.day_of_week === 2;
+  const isTuesday = selectedWorkout.day_of_week === 2;
   const isTuesdayBlocked = isTuesday && currentPhaseId === 'week_1';
   const isTuesdaySkip = isTuesday && currentPhaseId === 'week_2';
 
   // Modal de confirmação de dor no ombro/cotovelo para terça-feira na Semana 3+
   const [tuesdayConfirmModal, setTuesdayConfirmModal] = useState(false);
 
-  const handleTriggerTodayWorkout = (workout) => {
+  const handleTriggerWorkout = (workout) => {
     if (workout.day_of_week === 2) {
       if (currentPhaseId === 'week_1') {
         alert('O Módulo Extra de Terça está bloqueado na Semana 1 (Readaptação Articular) para poupar tendões.');
@@ -91,13 +92,13 @@ export default function Dashboard({
   }, [sessions]);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-fadeIn pb-12">
+    <div className="max-w-4xl mx-auto space-y-5 sm:space-y-6 animate-fadeIn pb-12">
       {/* 1. Banner de Impacto (Hardcore Mindset) */}
-      <div className="bg-[#18181C] border border-[#2A2A32] border-l-4 border-l-[#F97316] rounded-2xl p-5 shadow-xl relative overflow-hidden">
+      <div className="bg-[#18181C] border border-[#2A2A32] border-l-4 border-l-[#F97316] rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden">
         <div className="flex items-center justify-between gap-3 mb-2">
           <div className="flex items-center gap-2">
             <Flame size={16} className="text-[#F97316]" />
-            <span className="text-[11px] font-mono font-bold tracking-widest text-[#F97316] uppercase">
+            <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-widest text-[#F97316] uppercase">
               Mentalidade Brutal • Anti-Autossabotagem
             </span>
           </div>
@@ -120,35 +121,88 @@ export default function Dashboard({
           </div>
         </div>
 
-        <p className="text-base md:text-lg font-black italic text-white leading-relaxed">
+        <p className="text-sm sm:text-base md:text-lg font-black italic text-white leading-relaxed">
           "{currentQuote}"
         </p>
       </div>
 
-      {/* 2. Card em Destaque do Treino de Hoje */}
-      <div className="bg-gradient-to-br from-[#18181C] to-[#222228] border-2 border-[#10B981]/50 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+      {/* 2. Seletor Rápido de Qualquer Dia da Semana (Seg a Sáb) */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-gym-muted">
+            Selecione o Dia para Treinar
+          </span>
+          <span className="text-[11px] text-[#10B981] font-bold">
+            {selectedWorkout.day_name} selecionada
+          </span>
+        </div>
+
+        <div className="grid grid-cols-6 gap-1.5 sm:gap-2">
+          {SYSTEM_WORKOUTS.map((w) => {
+            const isSelected = w.day_of_week === selectedDayNumber;
+            const isToday = w.day_of_week === defaultTodayIndex;
+
+            return (
+              <button
+                key={w.id}
+                type="button"
+                onClick={() => setSelectedDayNumber(w.day_of_week)}
+                className={`py-2 px-1 rounded-xl border text-center transition-all ${
+                  isSelected
+                    ? 'bg-[#10B981] text-black border-[#10B981] shadow-lg shadow-[#10B981]/25 font-black scale-[1.02]'
+                    : isToday
+                    ? 'bg-[#18181C] text-white border-[#10B981]/50 font-bold hover:border-[#10B981]'
+                    : 'bg-[#18181C] text-gym-muted hover:text-white border-[#2A2A32] font-medium'
+                }`}
+              >
+                <div className="text-[10px] sm:text-xs uppercase font-mono tracking-wider font-extrabold">
+                  {w.day_name.slice(0, 3)}
+                </div>
+                <div className="text-[11px] sm:text-xs truncate font-bold mt-0.5">
+                  {w.slug === 'modulo-extra' ? 'Extra' : w.title.replace('Upper ', 'U-').replace('Lower ', 'L-')}
+                </div>
+                {isToday && (
+                  <div className={`text-[8px] uppercase tracking-widest font-black ${
+                    isSelected ? 'text-black' : 'text-[#10B981]'
+                  }`}>
+                    Hoje
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 3. Card em Destaque do Treino Selecionado */}
+      <div className="bg-gradient-to-br from-[#18181C] to-[#222228] border-2 border-[#10B981]/50 rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-44 h-44 bg-[#10B981]/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 bg-[#10B981] text-black text-xs font-black rounded-full uppercase tracking-wider">
-                Treino Recomendado de Hoje
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-0.5 bg-[#10B981] text-black text-xs font-black rounded-full uppercase tracking-wider">
+                {selectedDayNumber === defaultTodayIndex ? 'Treino de Hoje' : 'Treino Selecionado'}
               </span>
-              <span className="text-xs font-mono text-gym-muted">
-                {todaysWorkout.day_name}
+              <span className="text-xs font-mono text-gym-muted font-bold">
+                {selectedWorkout.day_name}
               </span>
+              {selectedWorkout.is_optional && (
+                <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-[#F97316]/20 text-[#F97316]">
+                  Módulo Opcional
+                </span>
+              )}
             </div>
 
-            <h2 className="text-3xl font-black text-white tracking-tight">
-              {todaysWorkout.title}
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              {selectedWorkout.title}
             </h2>
 
-            <p className="text-sm text-gym-muted font-medium">
-              Foco: <span className="text-white font-bold">{todaysWorkout.focus}</span> • {todaysWorkout.exercises.length} exercícios
+            <p className="text-xs sm:text-sm text-gym-muted font-medium">
+              Foco: <span className="text-white font-bold">{selectedWorkout.focus}</span> • {selectedWorkout.exercises.length} exercícios • ~{selectedWorkout.estimated_duration_min} min
             </p>
 
-            {/* Status específico de fase para hoje */}
+            {/* Status específico de fase para terça */}
             {isTuesday && (
               <div className="text-xs font-bold text-amber-400 bg-amber-400/10 px-3 py-1.5 rounded-xl border border-amber-400/20 inline-block">
                 {currentPhase.tuesdayBadge}
@@ -158,11 +212,11 @@ export default function Dashboard({
 
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <button
-              onClick={() => handleTriggerTodayWorkout(todaysWorkout)}
-              className="w-full sm:w-auto px-6 py-4 bg-[#10B981] hover:bg-[#10B981]/90 text-black font-black text-sm uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-[#10B981]/25 flex items-center justify-center gap-2.5 active:scale-95"
+              onClick={() => handleTriggerWorkout(selectedWorkout)}
+              className="w-full sm:w-auto px-6 py-3.5 sm:py-4 bg-[#10B981] hover:bg-[#10B981]/90 text-black font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-[#10B981]/25 flex items-center justify-center gap-2.5 active:scale-95"
             >
               <Play size={18} fill="currentColor" />
-              Iniciar Treino Agora
+              Iniciar {selectedWorkout.title}
             </button>
           </div>
         </div>
@@ -236,7 +290,7 @@ export default function Dashboard({
             return (
               <div
                 key={workout.id}
-                onClick={() => handleTriggerTodayWorkout(workout)}
+                onClick={() => handleTriggerWorkout(workout)}
                 className={`p-4 rounded-xl border bg-[#18181C] hover:bg-[#222228] transition-all cursor-pointer group ${
                   isCurrentToday ? 'border-[#10B981]/40' : 'border-[#2A2A32]'
                 }`}
