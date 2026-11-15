@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Clock, CheckCircle2, Circle, Flame, AlertTriangle, ShieldCheck, 
-  ArrowLeft, Save, Dumbbell, Info, Zap 
+  ArrowLeft, Save, Dumbbell, Info, Zap, Hourglass, Layers, X 
 } from 'lucide-react';
 import RestTimerModal from './RestTimerModal';
+import WarmupRampModal from './WarmupRampModal';
 import { getEffectiveSets, checkDoubleProgression, PHASES } from '../lib/progression';
 import { saveActiveSessionLocal, clearActiveSessionLocal } from '../lib/supabase';
 
@@ -18,11 +19,20 @@ export default function ActiveWorkout({
   const currentPhaseId = userProfile?.current_phase || 'week_1';
   const phaseInfo = PHASES[currentPhaseId];
 
-  // Estado da sessão
+  // Estado da sessão & Orçamento de Tempo (Utilitário 4)
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [timeBudgetMinutes, setTimeBudgetMinutes] = useState(workout.estimated_duration_min || 60);
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [warmupDone, setWarmupDone] = useState(false);
   const [sessionNotes, setSessionNotes] = useState('');
   const [isFinishing, setIsFinishing] = useState(false);
+
+  // Modal de Feeder Sets / Aquecimento (Utilitário 3)
+  const [warmupRampModal, setWarmupRampModal] = useState({
+    isOpen: false,
+    exerciseName: '',
+    defaultTargetWeight: 40
+  });
 
   // Frase fixa no topo da sessão
   const [stickyQuote] = useState(() => {
@@ -41,8 +51,8 @@ export default function ActiveWorkout({
     isCompound: false
   });
 
-  // Estrutura de dados das séries por exercício
-  // Map: exercise_id -> Array of { set_number, weight_kg, reps, rir, completed }
+  // Estrutura de dados das séries por exercício (Utilitário 5: Drop-Set & Rest-Pause)
+  // Map: exercise_id -> Array of { set_number, weight_kg, drop_weight_kg, reps, rir, set_type, completed }
   const [workoutLogs, setWorkoutLogs] = useState(() => {
     const initialMap = {};
     workout.exercises.forEach((ex) => {
@@ -52,8 +62,10 @@ export default function ActiveWorkout({
         sets.push({
           set_number: i,
           weight_kg: '',
+          drop_weight_kg: '',
           reps: '',
           rir: '',
+          set_type: 'normal', // 'normal' | 'drop' | 'rp'
           completed: false
         });
       }
@@ -61,6 +73,23 @@ export default function ActiveWorkout({
     });
     return initialMap;
   });
+
+  // Alterna o tipo de série (Utilitário 5: Normal -> Drop-set -> Rest-pause)
+  const cycleSetType = (exerciseId, setIdx) => {
+    setWorkoutLogs(prev => {
+      const currentSets = [...(prev[exerciseId] || [])];
+      const currentType = currentSets[setIdx]?.set_type || 'normal';
+      const nextType = currentType === 'normal' ? 'drop' : currentType === 'drop' ? 'rp' : 'normal';
+      currentSets[setIdx] = {
+        ...currentSets[setIdx],
+        set_type: nextType
+      };
+      return {
+        ...prev,
+        [exerciseId]: currentSets
+      };
+    });
+  };
 
   // Timer de duração da sessão
   useEffect(() => {
@@ -173,6 +202,11 @@ export default function ActiveWorkout({
     return `${String(mins).padStart(2, '0')}:${String(rem).padStart(2, '0')}`;
   };
 
+  // Cálculo do Orçamento de Tempo (Utilitário 4)
+  const remainingBudgetSeconds = timeBudgetMinutes ? (timeBudgetMinutes * 60) - elapsedSeconds : null;
+  const isTimeOver = remainingBudgetSeconds !== null && remainingBudgetSeconds <= 0;
+  const isTimeClose = remainingBudgetSeconds !== null && remainingBudgetSeconds > 0 && remainingBudgetSeconds < 600; // < 10min
+
   return (
     <div className="max-w-4xl w-full mx-auto pb-24 space-y-3 sm:space-y-4 animate-fadeIn overflow-x-hidden">
       {/* Top Header Fixo com Tempo e Ações - Totalmente integrado e colado à Navbar */}
@@ -184,19 +218,47 @@ export default function ActiveWorkout({
           <ArrowLeft size={16} /> Voltar
         </button>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex items-center gap-1.5 font-mono text-xs sm:text-sm font-bold bg-[#18181C] px-2.5 sm:px-3 py-1 rounded-full border border-[#2A2A32] text-white shadow-inner">
-            <Clock size={14} className="text-[#10B981] animate-spin" style={{ animationDuration: '6s' }} />
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
+          {/* Botão de Orçamento de Tempo (Utilitário 4) */}
+          <button
+            type="button"
+            onClick={() => setShowBudgetModal(true)}
+            className={`flex items-center gap-1 font-mono text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full border transition-all ${
+              timeBudgetMinutes === null
+                ? 'bg-[#18181C] text-gym-muted border-[#2A2A32]'
+                : isTimeOver
+                ? 'bg-red-500/20 text-red-400 border-red-500/40 animate-pulse'
+                : isTimeClose
+                ? 'bg-[#F97316]/20 text-[#F97316] border-[#F97316]/40'
+                : 'bg-[#18181C] text-gym-muted hover:text-white border-[#2A2A32]'
+            }`}
+            title="Ajustar limite de tempo da sessão"
+          >
+            <Hourglass size={12} className={isTimeOver ? 'text-red-400' : isTimeClose ? 'text-[#F97316]' : 'text-gym-muted'} />
+            {timeBudgetMinutes === null ? (
+              <span>Livre</span>
+            ) : isTimeOver ? (
+              <span>+{formatTime(Math.abs(remainingBudgetSeconds))}</span>
+            ) : (
+              <span>{formatTime(remainingBudgetSeconds)} restam</span>
+            )}
+          </button>
+
+          {/* Tempo Decorrido */}
+          <div className="flex items-center gap-1 font-mono text-xs sm:text-sm font-bold bg-[#18181C] px-2.5 sm:px-3 py-1 rounded-full border border-[#2A2A32] text-white shadow-inner">
+            <Clock size={13} className="text-[#10B981] animate-spin" style={{ animationDuration: '6s' }} />
             {formatTime(elapsedSeconds)}
           </div>
 
+          {/* Finalizar Treino */}
           <button
             onClick={handleFinish}
             disabled={isFinishing}
-            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 bg-[#10B981] hover:bg-[#10B981]/90 disabled:opacity-50 text-black font-extrabold text-xs rounded-full transition-all shadow-md shadow-[#10B981]/25 active:scale-95 shrink-0"
+            className="flex items-center gap-1 px-3 sm:px-4 py-1.5 bg-[#10B981] hover:bg-[#10B981]/90 disabled:opacity-50 text-black font-extrabold text-xs rounded-full transition-all shadow-md shadow-[#10B981]/25 active:scale-95 shrink-0"
           >
-            <Save size={14} />
-            {isFinishing ? 'Salvando...' : 'Finalizar Treino'}
+            <Save size={13} />
+            <span className="hidden sm:inline">{isFinishing ? 'Salvando...' : 'Finalizar Treino'}</span>
+            <span className="sm:hidden">{isFinishing ? 'Salvar' : 'Fim'}</span>
           </button>
         </div>
       </div>
@@ -311,6 +373,24 @@ export default function ActiveWorkout({
                     </div>
                   </div>
                 </div>
+
+                {/* Botão Feeder Sets (Utilitário 3) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const firstSetWeight = sets[0]?.weight_kg || lastLogs[0]?.weight_kg || 40;
+                    setWarmupRampModal({
+                      isOpen: true,
+                      exerciseName: exercise.name,
+                      defaultTargetWeight: Number(firstSetWeight) || 40
+                    });
+                  }}
+                  className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg transition-all shrink-0 active:scale-95"
+                  title="Calcular séries preparatórias sem fadiga"
+                >
+                  <Zap size={13} />
+                  <span>Feeder Sets</span>
+                </button>
               </div>
 
               {/* Nota biomecânica */}
@@ -356,9 +436,25 @@ export default function ActiveWorkout({
                             : 'bg-[#0F0F12] border-[#2A2A32]'
                         }`}
                       >
-                        {/* Número da Série */}
-                        <div className="col-span-2 flex items-center justify-center font-black text-sm text-white">
-                          #{set.set_number}
+                        {/* Número da Série & Alternador de Tipo (Utilitário 5) */}
+                        <div className="col-span-2 flex flex-col items-center justify-center">
+                          <button
+                            type="button"
+                            onClick={() => cycleSetType(exercise.id, setIdx)}
+                            className={`w-full py-1 rounded-md text-center transition-all ${
+                              set.set_type === 'drop'
+                                ? 'bg-purple-500/25 text-purple-300 border border-purple-500/40 font-black'
+                                : set.set_type === 'rp'
+                                ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40 font-black'
+                                : 'text-white hover:bg-[#222228]'
+                            }`}
+                            title="Toque para alternar: Normal -> Drop-set -> Rest-pause"
+                          >
+                            <span className="text-xs font-black block">#{set.set_number}</span>
+                            <span className="text-[8px] font-mono uppercase font-bold tracking-tight block">
+                              {set.set_type === 'drop' ? 'DROP' : set.set_type === 'rp' ? 'RP' : 'NORM'}
+                            </span>
+                          </button>
                         </div>
 
                         {/* Input Peso */}
@@ -399,6 +495,34 @@ export default function ActiveWorkout({
                           </button>
                         </div>
                       </div>
+
+                      {/* Linha Extra para Drop-Set (Utilitário 5) */}
+                      {set.set_type === 'drop' && (
+                        <div className="flex items-center justify-between px-3 py-1.5 bg-purple-950/25 border border-purple-500/30 rounded-xl text-xs animate-fadeIn">
+                          <span className="text-purple-300 font-bold flex items-center gap-1.5 text-[11px]">
+                            <Layers size={13} className="text-purple-400" />
+                            Drop-Set (Carga Secundária):
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="number"
+                              step="0.5"
+                              placeholder="0"
+                              value={set.drop_weight_kg || ''}
+                              onChange={(e) => handleUpdateSet(exercise.id, setIdx, 'drop_weight_kg', e.target.value)}
+                              className="w-16 h-7 text-center font-bold text-xs bg-[#18181C] border border-purple-500/50 focus:border-purple-400 rounded-lg text-white outline-none"
+                            />
+                            <span className="text-[10px] text-purple-300 font-mono">kg</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Linha Informativa para Rest-Pause (Utilitário 5) */}
+                      {set.set_type === 'rp' && (
+                        <div className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[10px] text-amber-400 font-bold flex items-center gap-1.5 animate-fadeIn">
+                          <span>⏱️ Rest-Pause: Ao atingir a falha, pause 15s e faça mais 2–4 reps imediatas.</span>
+                        </div>
+                      )}
 
                       {/* Alerta de Última Série Obrigatório */}
                       {isLastSet && (
@@ -452,6 +576,71 @@ export default function ActiveWorkout({
         isCompound={timerState.isCompound}
         quotes={quotes}
       />
+
+      {/* Modal Feeder Sets / Aquecimento (Utilitário 3) */}
+      <WarmupRampModal
+        isOpen={warmupRampModal.isOpen}
+        onClose={() => setWarmupRampModal(prev => ({ ...prev, isOpen: false }))}
+        exerciseName={warmupRampModal.exerciseName}
+        defaultTargetWeight={warmupRampModal.defaultTargetWeight}
+      />
+
+      {/* Modal de Ajuste de Orçamento de Tempo (Utilitário 4) */}
+      {showBudgetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-sm bg-[#18181C] border border-[#2A2A32] rounded-2xl p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2A2A32]">
+              <div className="flex items-center gap-2 text-white">
+                <Hourglass size={18} className="text-[#10B981]" />
+                <h3 className="text-sm font-black">Meta de Duração do Treino</h3>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setShowBudgetModal(false)} 
+                className="text-gym-muted hover:text-white p-1 rounded-lg"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-xs text-gym-muted leading-relaxed">
+              Defina seu limite de tempo para controlar os descansos e manter o ritmo do dia:
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {[45, 60, 75, 90].map((mins) => (
+                <button
+                  key={mins}
+                  type="button"
+                  onClick={() => {
+                    setTimeBudgetMinutes(mins);
+                    setShowBudgetModal(false);
+                  }}
+                  className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all ${
+                    timeBudgetMinutes === mins
+                      ? 'bg-[#10B981] text-black border-[#10B981] font-black shadow-md shadow-[#10B981]/20'
+                      : 'bg-[#0F0F12] text-white border-[#2A2A32] hover:border-[#10B981]'
+                  }`}
+                >
+                  {mins} minutos
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setTimeBudgetMinutes(null);
+                setShowBudgetModal(false);
+              }}
+              className={`w-full py-2.5 rounded-xl border text-xs font-bold transition-all ${
+                timeBudgetMinutes === null
+                  ? 'bg-[#10B981] text-black border-[#10B981]'
+                  : 'bg-[#0F0F12] text-gym-muted border-[#2A2A32] hover:text-white'
+              }`}
+            >
+              Sem Limite (Treino Livre)
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

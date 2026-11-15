@@ -28,6 +28,7 @@
 | `src/components/Dashboard.jsx` | Painel semanal, streak heatmap, frase do dia e seletor de fase. |
 | `src/components/ActiveWorkout.jsx` | Logger de treino ativo, rest timer, checklist articular e progressão. |
 | `src/components/RestTimerModal.jsx` | Cronômetro de descanso com frase brutal e áudio nativo. |
+| `src/components/WarmupRampModal.jsx` | Calculadora de Feeder Sets e ramp-up de aquecimento sem fadiga. |
 | `src/components/PhaseSelectorModal.jsx` | Modal seletor das fases de readaptação (Semana 1, 2 e 3+). |
 | `src/components/Analytics.jsx` | Gráficos Recharts de evolução de carga máxima e volume. |
 | `src/components/QuotesManager.jsx` | Gerenciador de frases de impacto do usuário. |

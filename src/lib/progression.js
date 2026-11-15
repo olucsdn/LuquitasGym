@@ -92,3 +92,63 @@ export function checkDoubleProgression(previousSetLogs, exercise) {
     lastReps: avgReps
   };
 }
+
+/**
+ * Calcula a pirâmide de aquecimento sem fadiga (Feeder Sets) com base na carga alvo de trabalho.
+ * @param {number} targetWeight - Carga de trabalho planejada em kg
+ */
+export function calculateWarmupRamp(targetWeight) {
+  const target = Number(targetWeight) || 0;
+  if (target <= 10) {
+    return [
+      {
+        step: 1,
+        label: 'Série 1: Aquecimento Base (50%)',
+        weight: Math.max(2, Math.round(target * 0.5)),
+        reps: 8,
+        rest: 60,
+        note: 'Cadência lenta e lubrificação articular sem pressa.'
+      },
+      {
+        step: 2,
+        label: 'Série 2: Preparação (80%)',
+        weight: Math.max(4, Math.round(target * 0.8)),
+        reps: 3,
+        rest: 60,
+        note: 'Reconhecimento motor leve antes da série de trabalho.'
+      }
+    ];
+  }
+
+  // Arredonda para números pares (ou múltiplos de anilhas/placas)
+  const set1 = Math.round((target * 0.5) / 2) * 2;
+  const set2 = Math.round((target * 0.7) / 2) * 2;
+  const set3 = Math.round((target * 0.85) / 2) * 2;
+
+  return [
+    {
+      step: 1,
+      label: 'Série 1: Ativação Neural (50%)',
+      weight: Math.max(2, set1),
+      reps: 8,
+      rest: 60,
+      note: 'Velocidade controlada, zero fadiga, lubrificação sinovial.'
+    },
+    {
+      step: 2,
+      label: 'Série 2: Reconhecimento de Peso (70%)',
+      weight: Math.max(set1 + 2, set2),
+      reps: 4,
+      rest: 75,
+      note: 'Prepara os mecanorreceptores sem consumir glicogênio.'
+    },
+    {
+      step: 3,
+      label: 'Série 3: Feeder Set Preparatória (85%)',
+      weight: Math.max(set2 + 2, set3),
+      reps: '1 a 2',
+      rest: 90,
+      note: 'Sente o peso real. Pare 2 reps antes do cansaço.'
+    }
+  ];
+}
