@@ -36,6 +36,35 @@ export default function App() {
   const [quotes, setQuotes] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [notification, setNotification] = useState(null);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  // Escuta evento de instalação PWA
+  useEffect(() => {
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        showToast('App instalado com sucesso!', 'success');
+      }
+      setDeferredPrompt(null);
+    } else {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS) {
+        alert("📲 Para instalar no iPhone:\n1. Toque no botão de Compartilhar (ícone com seta para cima no Safari)\n2. Selecione 'Adicionar à Tela de Início'");
+      } else {
+        alert("📲 Para instalar no celular:\nAbra o menu do navegador (3 pontos) e selecione 'Instalar aplicativo' ou 'Adicionar à tela inicial'.");
+      }
+    }
+  };
 
   // Exibe notificação temporária
   const showToast = (msg, type = 'success') => {
@@ -216,6 +245,7 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onOpenPhaseSelector={() => setIsPhaseModalOpen(true)}
+        onInstallApp={handleInstallApp}
         onLogout={handleLogout}
       />
 

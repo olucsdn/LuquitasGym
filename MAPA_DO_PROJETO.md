@@ -3,6 +3,11 @@
 
 | Arquivo | Responsabilidade / Descricao Essencial |
 | :--- | :--- |
+| `public/manifest.json` | Manifesto PWA (nome, tema escuro, ícones e modo standalone). |
+| `public/sw.js` | Service Worker para cache offline, assets e suporte mobile. |
+| `public/icon.svg` | Ícone vetorial oficial com anilhas e esquema de cores LuquitasGym. |
+| `public/icon-192.png` | Ícone PWA 192x192 para Android e iOS. |
+| `public/icon-512.png` | Ícone PWA 512x512 splash screen para dispositivos móveis. |
 | `README.md` | Documentação geral, stack, guia de execução e arquitetura. |
 | `vercel.json` | Configuração de roteamento SPA e rewrites para deploy na Vercel. |
 | `AGENTS.md` | Protocolo Universal de Governança de Agentes & Economia Extrema de Tokens. |

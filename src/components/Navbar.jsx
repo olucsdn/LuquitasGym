@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dumbbell, BarChart3, Quote, Flame, LogOut, CheckCircle2, CloudOff } from 'lucide-react';
+import { Dumbbell, BarChart3, Quote, Flame, LogOut, CheckCircle2, CloudOff, Smartphone } from 'lucide-react';
 import { PHASES } from '../lib/progression';
 import { isSupabaseConfigured } from '../lib/supabase';
 
@@ -9,6 +9,7 @@ export default function Navbar({
   activeTab,
   setActiveTab,
   onOpenPhaseSelector,
+  onInstallApp,
   onLogout
 }) {
   const currentPhase = PHASES[profile?.current_phase || 'week_1'];
@@ -102,6 +103,16 @@ export default function Navbar({
               </span>
             )}
           </div>
+
+          {/* Botão Instalar PWA no Celular */}
+          <button
+            onClick={onInstallApp}
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-[#10B981]/15 hover:bg-[#10B981]/25 border border-[#10B981]/30 rounded-full text-xs font-bold text-[#10B981] transition-all shadow-sm shadow-[#10B981]/10"
+            title="Instalar LuquitasGym no celular"
+          >
+            <Smartphone size={13} />
+            <span>Instalar</span>
+          </button>
 
           {/* Logout / Perfil */}
           {user && (
