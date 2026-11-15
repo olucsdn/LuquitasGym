@@ -10,7 +10,9 @@
 - [x] Fase 4: Dashboard, Seletor de Fase e Frases
 - [x] Fase 5: Logger de Treino Ativo, Timer e Dupla Progressão
 - [x] Fase 6: Analytics de Carga/Volume e Gestor de Frases
-Arquivos liberados: `supabase/schema.sql`, `package.json`, `src/*`
+- [x] Fase 7: Publicação no GitHub e compatibilidade Vercel
+- [x] Fase 8: Suporte PWA com Service Worker offline e instalação mobile
+Arquivos liberados: `supabase/schema.sql`, `package.json`, `src/*`, `public/*`
 
 <!-- Ao iniciar uma tarefa, insira abaixo via edit_file: -->
 <!-- ## [TASK: nome-da-tarefa] (Terminal: terminal-1) -->

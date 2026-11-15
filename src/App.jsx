@@ -181,6 +181,7 @@ export default function App() {
   const handleStartWorkout = (workout) => {
     setActiveWorkout(workout);
     setActiveTab('workout');
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
   // Cancelar Treino
@@ -189,6 +190,7 @@ export default function App() {
     if (confirmCancel) {
       setActiveWorkout(null);
       setActiveTab('dashboard');
+      window.scrollTo({ top: 0, behavior: 'instant' });
     }
   };
 
@@ -201,6 +203,7 @@ export default function App() {
 
     setActiveWorkout(null);
     setActiveTab('dashboard');
+    window.scrollTo({ top: 0, behavior: 'instant' });
     showToast('🔥 Treino concluído e salvo com sucesso!', 'success');
   };
 
@@ -238,20 +241,22 @@ export default function App() {
         </div>
       )}
 
-      {/* Navbar Superior */}
-      <Navbar
-        user={user}
-        profile={profile}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onOpenPhaseSelector={() => setIsPhaseModalOpen(true)}
-        onInstallApp={handleInstallApp}
-        onLogout={handleLogout}
-      />
+      {/* Navbar Superior (Oculta durante o treino ativo para foco total e fim da sobreposição) */}
+      {activeTab !== 'workout' && (
+        <Navbar
+          user={user}
+          profile={profile}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onOpenPhaseSelector={() => setIsPhaseModalOpen(true)}
+          onInstallApp={handleInstallApp}
+          onLogout={handleLogout}
+        />
+      )}
 
       {/* Conteúdo Principal */}
-      <main className={`flex-1 max-w-5xl w-full mx-auto px-3 sm:px-4 pb-20 md:pb-6 ${
-        activeTab === 'workout' ? 'pt-0' : 'py-4 sm:py-6'
+      <main className={`flex-1 w-full ${
+        activeTab === 'workout' ? 'p-0' : 'max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-20 md:pb-6'
       }`}>
         {activeTab === 'dashboard' && (
           <Dashboard
@@ -268,10 +273,12 @@ export default function App() {
           <ActiveWorkout
             workout={activeWorkout}
             userProfile={profile}
+            user={user}
             quotes={quotes}
             previousSessions={sessions}
             onFinishWorkout={handleFinishWorkout}
             onCancelWorkout={handleCancelWorkout}
+            onLogout={handleLogout}
           />
         )}
 

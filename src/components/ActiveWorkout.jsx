@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Clock, CheckCircle2, Circle, Flame, AlertTriangle, ShieldCheck, 
-  ArrowLeft, Save, Dumbbell, Info, Zap, Hourglass, Layers, X 
+  ArrowLeft, Save, Dumbbell, Info, Zap, Hourglass, Layers, X, LogOut 
 } from 'lucide-react';
 import RestTimerModal from './RestTimerModal';
 import WarmupRampModal from './WarmupRampModal';
@@ -14,7 +14,8 @@ export default function ActiveWorkout({
   quotes = [],
   previousSessions = [],
   onFinishWorkout,
-  onCancelWorkout
+  onCancelWorkout,
+  onLogout
 }) {
   const currentPhaseId = userProfile?.current_phase || 'week_1';
   const phaseInfo = PHASES[currentPhaseId];
@@ -208,60 +209,106 @@ export default function ActiveWorkout({
   const isTimeClose = remainingBudgetSeconds !== null && remainingBudgetSeconds > 0 && remainingBudgetSeconds < 600; // < 10min
 
   return (
-    <div className="max-w-4xl w-full mx-auto pb-24 space-y-3 sm:space-y-4 animate-fadeIn overflow-x-hidden">
-      {/* Top Header Fixo com Tempo e Ações - Totalmente integrado e colado à Navbar */}
-      <div className="sticky top-14 sm:top-16 z-30 bg-[#0F0F12]/98 backdrop-blur border-b border-[#2A2A32] py-2 px-2 sm:px-4 flex items-center justify-between shadow-md mb-1">
-        <button
-          onClick={onCancelWorkout}
-          className="flex items-center gap-1 text-xs font-bold text-gym-muted hover:text-white transition-colors py-1 px-2 rounded-lg hover:bg-[#18181C]"
-        >
-          <ArrowLeft size={16} /> Voltar
-        </button>
-
-        <div className="flex items-center gap-1.5 sm:gap-2.5">
-          {/* Botão de Orçamento de Tempo (Utilitário 4) */}
-          <button
-            type="button"
-            onClick={() => setShowBudgetModal(true)}
-            className={`flex items-center gap-1 font-mono text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full border transition-all ${
-              timeBudgetMinutes === null
-                ? 'bg-[#18181C] text-gym-muted border-[#2A2A32]'
-                : isTimeOver
-                ? 'bg-red-500/20 text-red-400 border-red-500/40 animate-pulse'
-                : isTimeClose
-                ? 'bg-[#F97316]/20 text-[#F97316] border-[#F97316]/40'
-                : 'bg-[#18181C] text-gym-muted hover:text-white border-[#2A2A32]'
-            }`}
-            title="Ajustar limite de tempo da sessão"
-          >
-            <Hourglass size={12} className={isTimeOver ? 'text-red-400' : isTimeClose ? 'text-[#F97316]' : 'text-gym-muted'} />
-            {timeBudgetMinutes === null ? (
-              <span>Livre</span>
-            ) : isTimeOver ? (
-              <span>+{formatTime(Math.abs(remainingBudgetSeconds))}</span>
-            ) : (
-              <span>{formatTime(remainingBudgetSeconds)} restam</span>
-            )}
-          </button>
-
-          {/* Tempo Decorrido */}
-          <div className="flex items-center gap-1 font-mono text-xs sm:text-sm font-bold bg-[#18181C] px-2.5 sm:px-3 py-1 rounded-full border border-[#2A2A32] text-white shadow-inner">
-            <Clock size={13} className="text-[#10B981] animate-spin" style={{ animationDuration: '6s' }} />
-            {formatTime(elapsedSeconds)}
+    <div className="w-full min-h-screen bg-[#0F0F12]">
+      {/* Top Header Unificado: Row 1 (Logo + Fase + Status) + Row 2 (Voltar + Cronômetro/Orçamento + Finalizar) */}
+      <header className="sticky top-0 z-40 bg-[#0F0F12] border-b border-[#2A2A32] shadow-xl">
+        {/* Row 1: Logo com demais infos (Semana, Status) */}
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 h-12 sm:h-13 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-tr from-[#10B981] to-[#F97316] p-0.5 flex items-center justify-center shadow-md">
+              <div className="w-full h-full bg-[#18181C] rounded-[6px] flex items-center justify-center">
+                <Dumbbell className="text-[#10B981]" size={15} />
+              </div>
+            </div>
+            <div>
+              <span className="font-black text-sm sm:text-base tracking-tight text-white flex items-center">
+                LUQUITAS<span className="text-[#10B981]">GYM</span>
+              </span>
+            </div>
           </div>
 
-          {/* Finalizar Treino */}
-          <button
-            onClick={handleFinish}
-            disabled={isFinishing}
-            className="flex items-center gap-1 px-3 sm:px-4 py-1.5 bg-[#10B981] hover:bg-[#10B981]/90 disabled:opacity-50 text-black font-extrabold text-xs rounded-full transition-all shadow-md shadow-[#10B981]/25 active:scale-95 shrink-0"
-          >
-            <Save size={13} />
-            <span className="hidden sm:inline">{isFinishing ? 'Salvando...' : 'Finalizar Treino'}</span>
-            <span className="sm:hidden">{isFinishing ? 'Salvar' : 'Fim'}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30">
+              {phaseInfo.badge}
+            </span>
+            <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-gym-muted bg-[#18181C] px-2 py-0.5 rounded-md border border-[#2A2A32]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse"></span>
+              TREINO ATIVO
+            </div>
+            {onLogout && (
+              <button
+                type="button"
+                onClick={onLogout}
+                className="p-1 text-gym-muted hover:text-red-400 rounded-lg hover:bg-[#18181C] transition-colors"
+                title="Sair da conta"
+              >
+                <LogOut size={15} />
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+
+        {/* Row 2: Ações de Treino (Voltar + Cronômetro / Orçamento + Finalizar) - 0px espaçamento, colado à Row 1 */}
+        <div className="border-t border-[#2A2A32] bg-[#121215] px-3 sm:px-4 py-2">
+          <div className="max-w-5xl mx-auto flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={onCancelWorkout}
+              className="flex items-center gap-1 text-xs font-bold text-gym-muted hover:text-white transition-colors py-1 px-2 rounded-lg hover:bg-[#18181C]"
+            >
+              <ArrowLeft size={16} /> Voltar
+            </button>
+
+            <div className="flex items-center gap-1.5 sm:gap-2.5">
+              {/* Botão de Orçamento de Tempo (Utilitário 4) */}
+              <button
+                type="button"
+                onClick={() => setShowBudgetModal(true)}
+                className={`flex items-center gap-1 font-mono text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full border transition-all ${
+                  timeBudgetMinutes === null
+                    ? 'bg-[#18181C] text-gym-muted border-[#2A2A32]'
+                    : isTimeOver
+                    ? 'bg-red-500/20 text-red-400 border-red-500/40 animate-pulse'
+                    : isTimeClose
+                    ? 'bg-[#F97316]/20 text-[#F97316] border-[#F97316]/40'
+                    : 'bg-[#18181C] text-gym-muted hover:text-white border-[#2A2A32]'
+                }`}
+                title="Ajustar limite de tempo da sessão"
+              >
+                <Hourglass size={12} className={isTimeOver ? 'text-red-400' : isTimeClose ? 'text-[#F97316]' : 'text-gym-muted'} />
+                {timeBudgetMinutes === null ? (
+                  <span>Livre</span>
+                ) : isTimeOver ? (
+                  <span>+{formatTime(Math.abs(remainingBudgetSeconds))}</span>
+                ) : (
+                  <span>{formatTime(remainingBudgetSeconds)} restam</span>
+                )}
+              </button>
+
+              {/* Tempo Decorrido */}
+              <div className="flex items-center gap-1 font-mono text-xs sm:text-sm font-bold bg-[#18181C] px-2.5 sm:px-3 py-1 rounded-full border border-[#2A2A32] text-white shadow-inner">
+                <Clock size={13} className="text-[#10B981] animate-spin" style={{ animationDuration: '6s' }} />
+                {formatTime(elapsedSeconds)}
+              </div>
+
+              {/* Finalizar Treino */}
+              <button
+                type="button"
+                onClick={handleFinish}
+                disabled={isFinishing}
+                className="flex items-center gap-1 px-3 sm:px-4 py-1.5 bg-[#10B981] hover:bg-[#10B981]/90 disabled:opacity-50 text-black font-extrabold text-xs rounded-full transition-all shadow-md shadow-[#10B981]/25 active:scale-95 shrink-0"
+              >
+                <Save size={13} />
+                <span className="hidden sm:inline">{isFinishing ? 'Salvando...' : 'Finalizar Treino'}</span>
+                <span className="sm:hidden">{isFinishing ? 'Salvar' : 'Fim'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Conteúdo Principal do Treino - Sem sobreposição, com espaçamento vertical correto */}
+      <div className="max-w-4xl w-full mx-auto px-3 sm:px-4 py-4 pb-24 space-y-4 sm:space-y-5 animate-fadeIn">
 
       {/* Frase Motivacional Fixa no Topo */}
       <div className="p-4 bg-[#18181C] border-l-4 border-[#F97316] rounded-r-xl shadow-lg">
@@ -566,6 +613,20 @@ export default function ActiveWorkout({
           className="w-full bg-[#0F0F12] border border-[#2A2A32] focus:border-[#10B981] rounded-xl p-3 text-sm text-white placeholder-gym-muted outline-none"
         />
       </div>
+
+      {/* Botão Finalizar Treino no Rodapé */}
+      <div className="pt-2 pb-6 flex justify-center">
+        <button
+          type="button"
+          onClick={handleFinish}
+          disabled={isFinishing}
+          className="w-full flex items-center justify-center gap-2 py-4 bg-[#10B981] hover:bg-[#10B981]/90 disabled:opacity-50 text-black font-black text-sm rounded-xl transition-all shadow-xl shadow-[#10B981]/25 active:scale-95"
+        >
+          <Save size={18} />
+          <span>{isFinishing ? 'Salvando Sessão...' : 'Finalizar e Salvar Treino'}</span>
+        </button>
+      </div>
+    </div>
 
       {/* Rest Timer Modal */}
       <RestTimerModal
