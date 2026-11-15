@@ -174,28 +174,28 @@ export default function ActiveWorkout({
   };
 
   return (
-    <div className="max-w-4xl w-full mx-auto pb-24 space-y-4 sm:space-y-5 animate-fadeIn overflow-x-hidden">
-      {/* Top Header Fixo com Tempo e Ações */}
-      <div className="sticky top-14 sm:top-16 z-30 bg-[#0F0F12]/95 backdrop-blur border-b border-[#2A2A32] py-2.5 px-2 sm:px-4 flex items-center justify-between rounded-xl">
+    <div className="max-w-4xl w-full mx-auto pb-24 space-y-3 sm:space-y-4 animate-fadeIn overflow-x-hidden">
+      {/* Top Header Fixo com Tempo e Ações - Totalmente integrado e colado à Navbar */}
+      <div className="sticky top-14 sm:top-16 z-30 bg-[#0F0F12]/98 backdrop-blur border-b border-[#2A2A32] py-2 px-2 sm:px-4 flex items-center justify-between shadow-md mb-1">
         <button
           onClick={onCancelWorkout}
-          className="flex items-center gap-1.5 text-xs text-gym-muted hover:text-white transition-colors"
+          className="flex items-center gap-1 text-xs font-bold text-gym-muted hover:text-white transition-colors py-1 px-2 rounded-lg hover:bg-[#18181C]"
         >
           <ArrowLeft size={16} /> Voltar
         </button>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 font-mono text-sm font-bold bg-[#18181C] px-3 py-1.5 rounded-full border border-[#2A2A32] text-white">
-            <Clock size={15} className="text-[#10B981] animate-spin" style={{ animationDuration: '6s' }} />
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 font-mono text-xs sm:text-sm font-bold bg-[#18181C] px-2.5 sm:px-3 py-1 rounded-full border border-[#2A2A32] text-white shadow-inner">
+            <Clock size={14} className="text-[#10B981] animate-spin" style={{ animationDuration: '6s' }} />
             {formatTime(elapsedSeconds)}
           </div>
 
           <button
             onClick={handleFinish}
             disabled={isFinishing}
-            className="flex items-center gap-1.5 px-4 py-1.5 bg-[#10B981] hover:bg-[#10B981]/90 disabled:opacity-50 text-black font-extrabold text-xs rounded-full transition-all shadow-lg shadow-[#10B981]/20 active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 bg-[#10B981] hover:bg-[#10B981]/90 disabled:opacity-50 text-black font-extrabold text-xs rounded-full transition-all shadow-md shadow-[#10B981]/25 active:scale-95 shrink-0"
           >
-            <Save size={15} />
+            <Save size={14} />
             {isFinishing ? 'Salvando...' : 'Finalizar Treino'}
           </button>
         </div>
