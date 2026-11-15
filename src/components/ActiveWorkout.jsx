@@ -283,10 +283,10 @@ export default function ActiveWorkout({
           const progression = checkDoubleProgression(lastLogs, exercise);
 
           return (
-            <div
-              key={exercise.id}
-              className="bg-[#18181C] border border-[#2A2A32] rounded-2xl p-5 shadow-lg relative overflow-hidden"
-            >
+            <React.Fragment key={exercise.id}>
+              <div
+                className="bg-[#18181C] border border-[#2A2A32] rounded-2xl p-5 shadow-lg relative overflow-hidden"
+              >
               {/* Header do Exercício */}
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex items-start gap-3">
@@ -412,6 +412,19 @@ export default function ActiveWorkout({
                 })}
               </div>
             </div>
+
+            {/* Frase Motivacional Brutal entre Exercícios */}
+            {exIndex < workout.exercises.length - 1 && (
+              <div className="my-2 p-3.5 bg-gradient-to-r from-[#18181C] via-[#1c1c22] to-[#18181C] border border-[#2A2A32] border-l-4 border-l-[#F97316] rounded-xl flex items-center gap-3 shadow-md">
+                <div className="p-1.5 rounded-lg bg-[#F97316]/10 text-[#F97316] shrink-0">
+                  <Flame size={16} />
+                </div>
+                <p className="text-xs md:text-sm font-black italic text-[#F4F4F5] tracking-tight leading-snug">
+                  "{quotes[(exIndex + 1) % quotes.length]?.quote_text || quotes[0]?.quote_text || 'O ferro não mente, não tem pena e não aceita desculpas.'}"
+                </p>
+              </div>
+            )}
+            </React.Fragment>
           );
         })}
       </div>
