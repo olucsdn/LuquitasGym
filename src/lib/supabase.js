@@ -131,7 +131,7 @@ export async function saveCompletedSession(userId, sessionPayload) {
           user_id: userId,
           workout_id: sessionPayload.workout_id,
           started_at: sessionPayload.started_at,
-          completed_at: new Date().toISOString(),
+          completed_at: sessionPayload.completed_at || new Date().toISOString(),
           phase_at_time: sessionPayload.phase_at_time,
           warmup_completed: sessionPayload.warmup_completed,
           notes: sessionPayload.notes || ''
@@ -168,7 +168,7 @@ export async function saveCompletedSession(userId, sessionPayload) {
       user_id: userId,
       workout_id: sessionPayload.workout_id,
       started_at: sessionPayload.started_at,
-      completed_at: new Date().toISOString(),
+      completed_at: sessionPayload.completed_at || new Date().toISOString(),
       phase_at_time: sessionPayload.phase_at_time,
       warmup_completed: sessionPayload.warmup_completed,
       notes: sessionPayload.notes,

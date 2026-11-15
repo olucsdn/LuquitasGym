@@ -28,10 +28,33 @@ export default function Dashboard({
     setQuoteIndex(prev => prev + 1);
   };
 
-  // Identificação do Dia e Seletor de Qualquer Dia da Semana
-  const todayDayNumber = new Date().getDay();
+  // Identificação de Data Atual e Seleção de Dia do Mês / Dia da Semana
+  const today = new Date();
+  const todayDateNumber = today.getDate();
+  const todayMonthNumber = today.getMonth();
+  const todayYearNumber = today.getFullYear();
+  const todayDayNumber = today.getDay();
   const defaultTodayIndex = todayDayNumber === 0 ? 1 : todayDayNumber;
+
+  // Estado do Dia do Mês Escolhido (Permite escolher qualquer dia de 1 a 31 do mês)
+  const [selectedMonthDay, setSelectedMonthDay] = useState(todayDateNumber);
   const [selectedDayNumber, setSelectedDayNumber] = useState(defaultTodayIndex);
+
+  // Objeto Date correspondente ao dia do mês selecionado
+  const selectedDateObj = useMemo(() => {
+    return new Date(todayYearNumber, todayMonthNumber, selectedMonthDay);
+  }, [todayYearNumber, todayMonthNumber, selectedMonthDay]);
+
+  const isSelectedDayToday = selectedMonthDay === todayDateNumber;
+
+  // Ao selecionar um dia do mês, sincroniza automaticamente com o treino padrão daquele dia da semana
+  const handleSelectMonthDay = (day) => {
+    setSelectedMonthDay(day);
+    const dateObj = new Date(todayYearNumber, todayMonthNumber, day);
+    const dayOfWeek = dateObj.getDay();
+    const mappedDay = dayOfWeek === 0 ? 1 : dayOfWeek; // Domingo mapeia para Seg por padrão
+    setSelectedDayNumber(mappedDay);
+  };
 
   const selectedWorkout = SYSTEM_WORKOUTS.find(w => w.day_of_week === selectedDayNumber) || SYSTEM_WORKOUTS[0];
 
@@ -58,8 +81,20 @@ export default function Dashboard({
         return;
       }
     }
-    onStartWorkout(workout);
+    onStartWorkout(workout, selectedDateObj);
   };
+
+  // Sessões realizadas no dia do mês selecionado
+  const sessionsOnSelectedDay = useMemo(() => {
+    return sessions.filter(sess => {
+      const sessDate = new Date(sess.completed_at);
+      return (
+        sessDate.getFullYear() === todayYearNumber &&
+        sessDate.getMonth() === todayMonthNumber &&
+        sessDate.getDate() === selectedMonthDay
+      );
+    });
+  }, [sessions, todayYearNumber, todayMonthNumber, selectedMonthDay]);
 
   // Cálculo da Frequência / Streak do Mês Atual
   const currentMonthStats = useMemo(() => {
@@ -126,11 +161,72 @@ export default function Dashboard({
         </p>
       </div>
 
-      {/* 2. Seletor Rápido de Qualquer Dia da Semana (Seg a Sáb) */}
+      {/* 2. Seletor do Dia do Mês para Treinar */}
+      <div className="bg-[#18181C] border border-[#2A2A32] rounded-2xl p-4 sm:p-5 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Calendar size={18} className="text-[#10B981]" />
+            <h3 className="text-xs sm:text-sm font-black text-white">
+              Dia do Mês para Treinar
+            </h3>
+            {isSelectedDayToday ? (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40">
+                Hoje (Dia {todayDateNumber})
+              </span>
+            ) : (
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#F97316]/20 text-[#F97316] border border-[#F97316]/40 animate-pulse">
+                Dia {selectedMonthDay} Selecionado
+              </span>
+            )}
+          </div>
+
+          {!isSelectedDayToday && (
+            <button
+              type="button"
+              onClick={() => handleSelectMonthDay(todayDateNumber)}
+              className="text-xs font-bold text-[#10B981] hover:underline flex items-center gap-1"
+            >
+              Voltar para Hoje
+            </button>
+          )}
+        </div>
+
+        {/* Barra de Seleção Rápida de Dias do Mês (1 a 31) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin">
+          {Array.from({ length: currentMonthStats.daysInMonth }, (_, i) => i + 1).map((day) => {
+            const isSelected = day === selectedMonthDay;
+            const isToday = day === todayDateNumber;
+            const isTrained = currentMonthStats.trainedDaysSet.has(day);
+
+            return (
+              <button
+                key={day}
+                type="button"
+                onClick={() => handleSelectMonthDay(day)}
+                className={`w-9 h-9 rounded-xl text-xs font-mono font-bold flex flex-col items-center justify-center shrink-0 transition-all ${
+                  isSelected
+                    ? 'bg-[#10B981] text-black shadow-lg shadow-[#10B981]/30 font-black scale-105'
+                    : isTrained
+                    ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/40 hover:bg-[#10B981]/25'
+                    : isToday
+                    ? 'bg-[#222228] text-white border-2 border-[#10B981]'
+                    : 'bg-[#0F0F12] text-gym-muted hover:text-white border border-[#2A2A32]'
+                }`}
+                title={`Dia ${day} do mês`}
+              >
+                <span>{day}</span>
+                {isTrained && <span className="w-1 h-1 rounded-full bg-[#10B981] -mt-0.5" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 3. Seletor de Ficha / Dia da Semana (Seg a Sáb) */}
       <div className="space-y-2">
         <div className="flex items-center justify-between px-1">
           <span className="text-xs font-mono font-bold uppercase tracking-wider text-gym-muted">
-            Selecione o Dia para Treinar
+            Ficha para esta Sessão
           </span>
           <span className="text-[11px] text-[#10B981] font-bold">
             {selectedWorkout.day_name} selecionada
@@ -174,7 +270,7 @@ export default function Dashboard({
         </div>
       </div>
 
-      {/* 3. Card em Destaque do Treino Selecionado */}
+      {/* 4. Card em Destaque do Treino Selecionado */}
       <div className="bg-gradient-to-br from-[#18181C] to-[#222228] border-2 border-[#10B981]/50 rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-44 h-44 bg-[#10B981]/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -182,7 +278,7 @@ export default function Dashboard({
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-0.5 bg-[#10B981] text-black text-xs font-black rounded-full uppercase tracking-wider">
-                {selectedDayNumber === defaultTodayIndex ? 'Treino de Hoje' : 'Treino Selecionado'}
+                {isSelectedDayToday ? 'Treino de Hoje' : `Treino para Dia ${selectedMonthDay}`}
               </span>
               <span className="text-xs font-mono text-gym-muted font-bold">
                 {selectedWorkout.day_name}
@@ -199,7 +295,7 @@ export default function Dashboard({
             </h2>
 
             <p className="text-xs sm:text-sm text-gym-muted font-medium">
-              Foco: <span className="text-white font-bold">{selectedWorkout.focus}</span> • {selectedWorkout.exercises.length} exercícios • ~{selectedWorkout.estimated_duration_min} min
+              Data da sessão: <strong className="text-white capitalize">{selectedDateObj.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</strong> • Foco: <span className="text-white font-bold">{selectedWorkout.focus}</span> • {selectedWorkout.exercises.length} exercícios • ~{selectedWorkout.estimated_duration_min} min
             </p>
 
             {/* Status específico de fase para terça */}
@@ -216,14 +312,14 @@ export default function Dashboard({
               className="w-full sm:w-auto px-6 py-3.5 sm:py-4 bg-[#10B981] hover:bg-[#10B981]/90 text-black font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-[#10B981]/25 flex items-center justify-center gap-2.5 active:scale-95"
             >
               <Play size={18} fill="currentColor" />
-              Iniciar {selectedWorkout.title}
+              Iniciar {selectedWorkout.title} {isSelectedDayToday ? '' : `(Dia ${selectedMonthDay})`}
             </button>
           </div>
         </div>
       </div>
 
-      {/* 3. Calendário de Frequência (Streak & Heatmap Mensal) */}
-      <div className="bg-[#18181C] border border-[#2A2A32] rounded-2xl p-6">
+      {/* 5. Calendário de Frequência (Streak & Heatmap Mensal Interativo) */}
+      <div className="bg-[#18181C] border border-[#2A2A32] rounded-2xl p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <div>
             <h3 className="text-sm font-black text-white flex items-center gap-2">
@@ -231,7 +327,7 @@ export default function Dashboard({
               Frequência do Mês ({currentMonthStats.trainedDaysCount} dias treinados)
             </h3>
             <p className="text-xs text-gym-muted mt-0.5">
-              Meta principal: 5 treinos fixos/semana (Seg, Qua, Qui, Sex, Sáb). Terça = Módulo Opcional.
+              Toque em qualquer dia para selecioná-lo e treinar ou registrar treinos retroativos.
             </p>
           </div>
 
@@ -245,29 +341,66 @@ export default function Dashboard({
           </div>
         </div>
 
-        {/* Heatmap Grid dos dias do mês */}
+        {/* Heatmap Grid dos dias do mês (Todos clicáveis) */}
         <div className="grid grid-cols-7 sm:grid-cols-10 md:grid-cols-15 gap-2">
           {Array.from({ length: currentMonthStats.daysInMonth }, (_, i) => i + 1).map((day) => {
             const isTrained = currentMonthStats.trainedDaysSet.has(day);
-            const isToday = new Date().getDate() === day;
+            const isToday = todayDateNumber === day;
+            const isSelected = selectedMonthDay === day;
 
             return (
-              <div
+              <button
                 key={day}
-                className={`h-10 rounded-lg flex flex-col items-center justify-center text-xs font-mono font-bold transition-all ${
+                type="button"
+                onClick={() => handleSelectMonthDay(day)}
+                className={`h-11 rounded-lg flex flex-col items-center justify-center text-xs font-mono font-bold transition-all cursor-pointer ${
+                  isSelected
+                    ? 'ring-2 ring-[#10B981] ring-offset-2 ring-offset-[#0F0F12] scale-105 z-10'
+                    : 'hover:border-[#10B981]/50'
+                } ${
                   isTrained
                     ? 'bg-[#10B981] text-black shadow-md shadow-[#10B981]/20'
                     : isToday
                     ? 'bg-[#18181C] text-white border-2 border-[#10B981]'
                     : 'bg-[#0F0F12] border border-[#2A2A32] text-gym-muted'
                 }`}
-                title={`Dia ${day}: ${isTrained ? 'Treino Realizado' : 'Sem registro'}`}
+                title={`Dia ${day}: Toque para selecionar`}
               >
                 <span>{day}</span>
-                {isTrained && <CheckCircle2 size={10} className="stroke-[3]" />}
-              </div>
+                {isTrained ? (
+                  <CheckCircle2 size={10} className="stroke-[3]" />
+                ) : isToday ? (
+                  <span className="text-[7px] font-black uppercase tracking-tighter text-[#10B981]">Hoje</span>
+                ) : null}
+              </button>
             );
           })}
+        </div>
+
+        {/* Detalhes do Dia Selecionado no Heatmap */}
+        <div className="mt-4 p-3 bg-[#0F0F12] border border-[#2A2A32] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="font-mono font-bold text-white">Dia {selectedMonthDay}:</span>
+            {sessionsOnSelectedDay.length > 0 ? (
+              <span className="text-[#10B981] font-bold flex items-center gap-1.5">
+                <CheckCircle2 size={14} />
+                {sessionsOnSelectedDay.length} treino(s) registrado(s) ({sessionsOnSelectedDay.map(s => {
+                  const w = SYSTEM_WORKOUTS.find(sw => sw.id === s.workout_id);
+                  return w ? w.title : 'Treino Concluído';
+                }).join(', ')})
+              </span>
+            ) : (
+              <span className="text-gym-muted">Nenhum treino registrado neste dia.</span>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => handleTriggerWorkout(selectedWorkout)}
+            className="text-xs font-bold text-[#10B981] hover:underline shrink-0 text-left"
+          >
+            Treinar no Dia {selectedMonthDay} &rarr;
+          </button>
         </div>
       </div>
 
@@ -360,7 +493,7 @@ export default function Dashboard({
               <button
                 onClick={() => {
                   setTuesdayConfirmModal(false);
-                  onStartWorkout(SYSTEM_WORKOUTS.find(w => w.day_of_week === 2));
+                  onStartWorkout(SYSTEM_WORKOUTS.find(w => w.day_of_week === 2), selectedDateObj);
                 }}
                 className="py-3 bg-[#10B981] hover:bg-[#10B981]/90 text-xs font-black text-black rounded-xl transition-all shadow-lg shadow-[#10B981]/20"
               >

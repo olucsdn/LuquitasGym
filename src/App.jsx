@@ -30,6 +30,7 @@ export default function App() {
   // Navegação
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'workout' | 'analytics' | 'quotes'
   const [activeWorkout, setActiveWorkout] = useState(null);
+  const [activeWorkoutDate, setActiveWorkoutDate] = useState(null);
   const [isPhaseModalOpen, setIsPhaseModalOpen] = useState(false);
 
   // Dados
@@ -177,9 +178,10 @@ export default function App() {
     showToast(`Fase atualizada com sucesso!`, 'success');
   };
 
-  // Iniciar Treino
-  const handleStartWorkout = (workout) => {
+  // Iniciar Treino com data opcional (suporte a escolher o dia do mês)
+  const handleStartWorkout = (workout, sessionDate = new Date()) => {
     setActiveWorkout(workout);
+    setActiveWorkoutDate(sessionDate);
     setActiveTab('workout');
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
@@ -189,6 +191,7 @@ export default function App() {
     const confirmCancel = window.confirm('Deseja realmente sair do treino em andamento? O progresso não salvo será descartado.');
     if (confirmCancel) {
       setActiveWorkout(null);
+      setActiveWorkoutDate(null);
       setActiveTab('dashboard');
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
@@ -202,6 +205,7 @@ export default function App() {
     setSessions(updatedSess);
 
     setActiveWorkout(null);
+    setActiveWorkoutDate(null);
     setActiveTab('dashboard');
     window.scrollTo({ top: 0, behavior: 'instant' });
     showToast('🔥 Treino concluído e salvo com sucesso!', 'success');
@@ -272,6 +276,7 @@ export default function App() {
         {activeTab === 'workout' && activeWorkout && (
           <ActiveWorkout
             workout={activeWorkout}
+            sessionDate={activeWorkoutDate}
             userProfile={profile}
             user={user}
             quotes={quotes}

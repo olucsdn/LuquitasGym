@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Clock, CheckCircle2, Circle, Flame, AlertTriangle, ShieldCheck, 
-  ArrowLeft, Save, Dumbbell, Info, Zap, Hourglass, Layers, X, LogOut 
+  ArrowLeft, Save, Dumbbell, Info, Zap, Hourglass, Layers, X, LogOut, Calendar 
 } from 'lucide-react';
 import RestTimerModal from './RestTimerModal';
 import WarmupRampModal from './WarmupRampModal';
@@ -10,6 +10,7 @@ import { saveActiveSessionLocal, clearActiveSessionLocal } from '../lib/supabase
 
 export default function ActiveWorkout({
   workout,
+  sessionDate,
   userProfile,
   quotes = [],
   previousSessions = [],
@@ -182,9 +183,17 @@ export default function ActiveWorkout({
       });
     });
 
+    const now = new Date();
+    let completedAtDate = new Date();
+    if (sessionDate) {
+      completedAtDate = new Date(sessionDate);
+      completedAtDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+    }
+
     const payload = {
       workout_id: workout.id,
-      started_at: new Date(Date.now() - elapsedSeconds * 1000).toISOString(),
+      started_at: new Date(completedAtDate.getTime() - elapsedSeconds * 1000).toISOString(),
+      completed_at: completedAtDate.toISOString(),
       phase_at_time: currentPhaseId,
       warmup_completed: warmupDone,
       notes: sessionNotes,
@@ -227,11 +236,17 @@ export default function ActiveWorkout({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {sessionDate && (
+              <span className="flex items-center gap-1 text-[10px] sm:text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#18181C] text-[#F97316] border border-[#F97316]/40" title="Data agendada da sessão">
+                <Calendar size={11} />
+                <span>Dia {new Date(sessionDate).getDate()}</span>
+              </span>
+            )}
             <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30">
               {phaseInfo.badge}
             </span>
-            <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-gym-muted bg-[#18181C] px-2 py-0.5 rounded-md border border-[#2A2A32]">
+            <div className="hidden xs:flex items-center gap-1.5 text-[10px] font-mono font-bold text-gym-muted bg-[#18181C] px-2 py-0.5 rounded-md border border-[#2A2A32]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse"></span>
               TREINO ATIVO
             </div>
