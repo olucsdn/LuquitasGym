@@ -87,9 +87,9 @@ export default function Analytics({ sessions = [] }) {
   }, [maxWeightData]);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl w-full mx-auto space-y-4 sm:space-y-6 overflow-x-hidden">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#18181C] border border-[#2A2A32] rounded-2xl p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-[#18181C] border border-[#2A2A32] rounded-2xl p-4 sm:p-6">
         <div>
           <h1 className="text-xl font-black text-white flex items-center gap-2">
             <TrendingUp size={22} className="text-[#10B981]" />
@@ -100,16 +100,16 @@ export default function Analytics({ sessions = [] }) {
           </p>
         </div>
 
-        {/* Seletor de Exercício */}
-        <div className="flex items-center gap-2">
-          <Filter size={16} className="text-gym-muted" />
+        {/* Seletor de Exercício Responsivo com Truncate */}
+        <div className="flex items-center gap-2 w-full sm:w-auto max-w-full">
+          <Filter size={16} className="text-gym-muted shrink-0" />
           <select
             value={selectedExerciseName}
             onChange={(e) => setSelectedExerciseName(e.target.value)}
-            className="bg-[#0F0F12] border border-[#2A2A32] text-white text-xs font-bold rounded-xl px-3 py-2.5 outline-none focus:border-[#10B981]"
+            className="flex-1 sm:w-72 md:w-80 max-w-[calc(100vw-80px)] sm:max-w-xs truncate bg-[#0F0F12] border border-[#2A2A32] text-white text-xs font-bold rounded-xl px-3 py-2.5 outline-none focus:border-[#10B981]"
           >
             {allExercises.map((ex) => (
-              <option key={ex.name} value={ex.name}>
+              <option key={ex.name} value={ex.name} className="bg-[#18181C] text-white">
                 {ex.name}
               </option>
             ))}
@@ -156,9 +156,11 @@ export default function Analytics({ sessions = [] }) {
 
       {/* Gráfico 1: Evolução de Carga Máxima (kg) */}
       <div className="bg-[#18181C] border border-[#2A2A32] rounded-2xl p-6">
-        <h2 className="text-sm font-bold text-white mb-1 flex items-center justify-between">
+        <h2 className="text-sm font-bold text-white mb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
           <span>Progressão de Carga Máxima (kg)</span>
-          <span className="text-xs font-normal text-[#10B981]">{selectedExerciseName}</span>
+          <span className="text-xs font-semibold text-[#10B981] truncate max-w-full sm:max-w-[280px]" title={selectedExerciseName}>
+            {selectedExerciseName}
+          </span>
         </h2>
         <p className="text-xs text-gym-muted mb-4">Carga mais alta levantada em cada treino registrado.</p>
 
