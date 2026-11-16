@@ -329,3 +329,54 @@ export async function deleteQuote(userId, quoteId) {
     localStorage.setItem(STORAGE_KEYS.LOCAL_QUOTES(userId), JSON.stringify(updated));
   } catch (e) {}
 }
+
+// ==============================================================================
+// BACKUP & PORTABILIDADE LOCAL (USO PESSOAL SEGURO)
+// ==============================================================================
+
+/**
+ * Exporta todo o histórico de treinos, perfil e frases em JSON
+ */
+export function exportUserDataJSON(userId) {
+  const profile = getLocalProfile(userId);
+  const rawHistory = localStorage.getItem(STORAGE_KEYS.LOCAL_HISTORY(userId));
+  const rawQuotes = localStorage.getItem(STORAGE_KEYS.LOCAL_QUOTES(userId));
+
+  const backup = {
+    version: '1.0',
+    app: 'LuquitasGym',
+    exported_at: new Date().toISOString(),
+    user_id: userId,
+    profile: profile,
+    history: rawHistory ? JSON.parse(rawHistory) : [],
+    quotes: rawQuotes ? JSON.parse(rawQuotes) : []
+  };
+
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `luquitasgym-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Importa dados de um arquivo JSON de backup
+ */
+export function importUserDataJSON(userId, jsonData) {
+  if (!jsonData || typeof jsonData !== 'object') {
+    throw new Error('Arquivo de backup inválido.');
+  }
+
+  if (jsonData.profile) {
+    saveLocalProfile(userId, jsonData.profile);
+  }
+  if (Array.isArray(jsonData.history)) {
+    localStorage.setItem(STORAGE_KEYS.LOCAL_HISTORY(userId), JSON.stringify(jsonData.history));
+  }
+  if (Array.isArray(jsonData.quotes)) {
+    localStorage.setItem(STORAGE_KEYS.LOCAL_QUOTES(userId), JSON.stringify(jsonData.quotes));
+  }
+  return true;
+}

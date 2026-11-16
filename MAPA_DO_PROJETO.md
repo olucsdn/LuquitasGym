@@ -13,7 +13,7 @@
 | `AGENTS.md` | Protocolo Universal de Governança de Agentes, Economia de Tokens & Pipeline de 6 Fases. |
 | `PRODUCT.md` | Contexto de produto, persona hardcore, tom de voz e tabus estéticos explícitos. |
 | `DESIGN.md` | Especificação formal de tokens DTCG, paleta Preto/Branco/Laranja e ergonomia de toque. |
-| `CREDENCIAS_DONO.md` | Documentação oficial e segura da conta administrativa master (`luquitas` / `eusouodono`). |
+| `CREDENCIAS_DONO.md` | Documentação oficial da conta pessoal do dono ('luquitas') e modo zero fricção. |
 | `.agents/skills.json` | Manifesto de registro e descoberta de skills nativas do Antigravity CLI. |
 | `.agents/skills/` | Suíte de 10 Agent Skills prontas para execução modular nativa no workspace. |
 | `skills/` | Diretório mestre de skills curadas, orquestrador e documentação de referência. |
@@ -26,8 +26,8 @@
 | `package.json` | Dependências e scripts do frontend React/Vite/Tailwind. |
 | `src/main.jsx` | Ponto de entrada da aplicação React. |
 | `src/App.jsx` | Roteador e orquestrador principal de visualizações. |
-| `src/lib/supabase.js` | Cliente Supabase configurado com auth e sessão. |
-| `src/lib/authStore.js` | Repositório local seguro de autenticação obrigatória, validação e conta master do dono (`luquitas`). |
+| `src/lib/supabase.js` | Cliente Supabase configurado com auth, sessão e exportador/importador JSON. |
+| `src/lib/authStore.js` | Repositório local de autenticação, auto-login pessoal e gerenciamento de sessão. |
 | `src/lib/workoutData.js` | Seed data, ficha oficial de 6 dias e frases motivacionais padrão. |
 | `src/lib/progression.js` | Motor de Dupla Progressão automática e regras de fases articulares. |
 | `src/lib/__tests__/progression.test.js` | Suíte de testes unitários Vitest para regras de progressão e fases. |

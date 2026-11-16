@@ -20,7 +20,8 @@ import {
   getQuotes,
   addQuote,
   deleteQuote,
-  processSyncQueue
+  processSyncQueue,
+  exportUserDataJSON
 } from './lib/supabase';
 import { getStoredSession, clearStoredSession } from './lib/authStore';
 import { SYSTEM_WORKOUTS } from './lib/workoutData';
@@ -290,6 +291,12 @@ export default function App() {
           setActiveTab={setActiveTab}
           onOpenPhaseSelector={() => setIsPhaseModalOpen(true)}
           onInstallApp={handleInstallApp}
+          onExportBackup={() => {
+            if (user?.id) {
+              exportUserDataJSON(user.id);
+              showToast('Backup JSON exportado com sucesso!', 'success');
+            }
+          }}
           onLogout={handleLogout}
         />
       )}

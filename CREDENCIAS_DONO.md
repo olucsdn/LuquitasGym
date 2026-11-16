@@ -1,6 +1,6 @@
-# CREDENCIAIS DO DONO — LUQUITASGYM
+# ACESSO DO DONO & CONTA PESSOAL — LUQUITASGYM
 
-Documentação oficial e segura da conta administrativa master pré-configurada no sistema.
+Documentação oficial da conta administrativa pessoal pré-configurada no sistema.
 
 ---
 
@@ -9,14 +9,14 @@ Documentação oficial e segura da conta administrativa master pré-configurada 
 | Campo | Valor |
 | :--- | :--- |
 | **Identificador (User)** | `luquitas` |
-| **E-mail Alternativo** | `luquitas@luquitasgym.com` |
-| **Senha (Password)** | `eusouodono` |
+| **E-mail Alternativo** | `luquitas@luquitasgym.local` |
 | **Cargo / Papel** | `admin` (Dono & Criador) |
 | **Nome Exibido** | `Lucas (Dono)` |
+| **Modo de Acesso** | Auto-inicializado (Zero Fricção Pessoal) |
 
 ---
 
 ### Regras de Acesso e Segurança
-1. **Obrigatoriedade de Login**: Qualquer visitante ou usuário deve possuir ou criar uma conta antes de acessar o dashboard e os treinos. O bypass de convidado não autenticado foi completamente desativado.
-2. **Persistência Imediata**: A conta do dono está gravada e inicializada em `src/lib/authStore.js` (`OWNER_ACCOUNT`).
-3. **Novos Usuários**: Podem se cadastrar a qualquer momento através da aba **Criar Conta** na tela de login.
+1. **Modo Pessoal Zero Fricção**: Ao abrir o aplicativo no smartphone ou desktop, o sistema auto-inicializa a sessão pessoal do Dono (`Lucas (Dono)`) sem exigir digitação de senhas na academia.
+2. **Sessão Persistente**: A sessão fica gravada no armazenamento local seguro (`luquitasgym_auth_session`).
+3. **Novos Usuários / Expansão**: Caso o Dono faça logout explícito, a tela de login/cadastro é exibida permitindo alternância de contas ou novos cadastros.

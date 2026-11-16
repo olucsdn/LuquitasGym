@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dumbbell, BarChart3, Quote, Flame, LogOut, CheckCircle2, CloudOff, Smartphone } from 'lucide-react';
+import { Dumbbell, BarChart3, Quote, Flame, LogOut, CheckCircle2, CloudOff, Smartphone, Download } from 'lucide-react';
 import { PHASES } from '../lib/progression';
 import { isSupabaseConfigured } from '../lib/supabase';
 import BrandLogo from './BrandLogo';
@@ -11,6 +11,7 @@ export default function Navbar({
   setActiveTab,
   onOpenPhaseSelector,
   onInstallApp,
+  onExportBackup,
   onLogout
 }) {
   const currentPhase = PHASES[profile?.current_phase || 'week_1'];
@@ -93,6 +94,18 @@ export default function Navbar({
                 </span>
               )}
             </div>
+
+            {/* Botão Backup JSON */}
+            {onExportBackup && (
+              <button
+                onClick={onExportBackup}
+                className="flex items-center gap-1.5 px-2.5 py-1 bg-[#121215] hover:bg-[#18181D] border border-white/[0.08] hover:border-white/[0.2] rounded-full text-xs font-bold text-[#A1A1AA] hover:text-white transition-all shrink-0"
+                title="Exportar backup dos treinos em JSON"
+              >
+                <Download size={13} />
+                <span className="hidden sm:inline">Backup</span>
+              </button>
+            )}
 
             {/* Botão Instalar PWA */}
             <button

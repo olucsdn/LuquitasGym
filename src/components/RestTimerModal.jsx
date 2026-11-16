@@ -24,10 +24,26 @@ export default function RestTimerModal({
   const [isRunning, setIsRunning] = useState(true);
   const [activeQuote, setActiveQuote] = useState('');
   const audioContextRef = useRef(null);
+  const targetEndTimeRef = useRef(null);
+  const hasFinishedRef = useRef(false);
+
+  // Solicita permissão de notificação nativa silenciosamente na primeira interação
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      try {
+        Notification.requestPermission();
+      } catch (e) {
+        // Ignora em navegadores sem suporte
+      }
+    }
+  }, []);
 
   // Inicializa o timer quando aberto
   useEffect(() => {
     if (isOpen) {
+      const now = Date.now();
+      targetEndTimeRef.current = now + initialSeconds * 1000;
+      hasFinishedRef.current = false;
       setSecondsLeft(initialSeconds);
       setIsRunning(true);
       if (quotes.length > 0) {
@@ -37,50 +53,135 @@ export default function RestTimerModal({
     }
   }, [isOpen, initialSeconds, quotes]);
 
-  // Contagem regressiva
+  // Tecla Escape para fechar acessivelmente
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Resiliência de tela desligada via delta de timestamp + visibilitychange
   useEffect(() => {
     if (!isOpen || !isRunning) return;
 
-    if (secondsLeft <= 0) {
-      triggerHaptic([150, 100, 250]); // Vibração dupla enérgica (alerta de bolso)
-      playBeep();
-      return;
-    }
+    const checkAndSync = () => {
+      if (!targetEndTimeRef.current) return;
+      const remainingMs = targetEndTimeRef.current - Date.now();
+      const remainingSec = Math.max(0, Math.round(remainingMs / 1000));
+      setSecondsLeft(remainingSec);
+
+      if (remainingSec <= 0 && !hasFinishedRef.current) {
+        hasFinishedRef.current = true;
+        triggerFinishAlert();
+      }
+    };
+
+    // Sincroniza instantaneamente ao reacender a tela (economiza bateria com tela desligada)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkAndSync();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     const interval = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          triggerHaptic([150, 100, 250]); // Vibração dupla enérgica
-          playBeep();
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+      if (!targetEndTimeRef.current) return;
+      const remainingMs = targetEndTimeRef.current - Date.now();
+      const remainingSec = Math.max(0, Math.round(remainingMs / 1000));
+      setSecondsLeft(remainingSec);
 
-    return () => clearInterval(interval);
-  }, [isOpen, isRunning, secondsLeft]);
+      // Bipes regressivos nos 3s finais (3, 2, 1) para atleta com fone
+      if (remainingSec === 3 || remainingSec === 2 || remainingSec === 1) {
+        playBeep(520, 0.15);
+        triggerHaptic(30);
+      }
+
+      if (remainingSec <= 0) {
+        clearInterval(interval);
+        if (!hasFinishedRef.current) {
+          hasFinishedRef.current = true;
+          triggerFinishAlert();
+        }
+      }
+    }, 500);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isOpen, isRunning]);
+
+  // Disparo de conclusão (vibração de bolso + notificação nativa + bipe longo)
+  const triggerFinishAlert = () => {
+    triggerHaptic([200, 100, 200, 100, 450]);
+    playBeep(880, 0.7);
+
+    // Notificação do sistema para acender a tela no bolso se estiver bloqueada
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification('🔥 Descanso Finalizado — LuquitasGym', {
+          body: `${exerciseName || 'Próxima série'}: Hora de voltar pro ferro!`,
+          icon: '/icon-192.png',
+          vibrate: [200, 100, 200, 100, 400],
+          tag: 'rest-timer-finish'
+        });
+      } catch (e) {
+        // Fallback silencioso
+      }
+    }
+  };
+
+  // Ajuste do tempo restante com atualização do targetEndTime
+  const adjustSeconds = (deltaSec) => {
+    triggerHaptic(25);
+    setSecondsLeft((prev) => {
+      const next = Math.max(0, prev + deltaSec);
+      targetEndTimeRef.current = Date.now() + next * 1000;
+      if (next > 0) hasFinishedRef.current = false;
+      return next;
+    });
+  };
+
+  // Alterna play/pause preservando o delta correto
+  const togglePlayPause = () => {
+    triggerHaptic(30);
+    if (isRunning) {
+      setIsRunning(false);
+    } else {
+      targetEndTimeRef.current = Date.now() + secondsLeft * 1000;
+      hasFinishedRef.current = false;
+      setIsRunning(true);
+    }
+  };
 
   // Síntese de beep sonoro via Web Audio API (Zero dependência externa)
-  const playBeep = () => {
+  const playBeep = (freq = 880, duration = 0.6) => {
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = audioContextRef.current || new AudioCtx();
       audioContextRef.current = ctx;
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
 
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, ctx.currentTime); // Tom A5
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(0.35, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start();
-      osc.stop(ctx.currentTime + 0.6);
+      osc.stop(ctx.currentTime + duration);
     } catch (e) {
       console.warn('Audio play error:', e);
     }
@@ -94,12 +195,17 @@ export default function RestTimerModal({
   const progressPercent = Math.max(0, Math.min(100, (secondsLeft / initialSeconds) * 100));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Cronômetro de descanso"
+    >
       <div className="w-full max-w-md bg-[#121215] border border-white/[0.08] rounded-2xl p-6 shadow-2xl relative overflow-hidden">
         {/* Barra de progresso no topo */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#18181D]">
           <div
-            className={`h-full transition-all duration-1000 ${
+            className={`h-full transition-all duration-500 ${
               secondsLeft === 0 ? 'bg-red-500' : 'bg-[#FF6B00]'
             }`}
             style={{ width: `${progressPercent}%` }}
@@ -117,7 +223,8 @@ export default function RestTimerModal({
           <button
             onClick={onClose}
             className="text-[#A1A1AA] hover:text-white p-1 rounded-lg transition-colors"
-            title="Fechar timer"
+            title="Fechar timer (Esc)"
+            aria-label="Fechar timer"
           >
             <X size={20} />
           </button>
@@ -152,13 +259,10 @@ export default function RestTimerModal({
         )}
 
         {/* Botões de Ação Rápida com Touch Target Otimizado (48px) */}
-        <div className="grid grid-cols-4 gap-2.5 mb-4">
+        <div className="grid grid-cols-4 gap-2.5 mb-2">
           <button
             type="button"
-            onClick={() => {
-              triggerHaptic(25);
-              setSecondsLeft(Math.max(0, secondsLeft - 15));
-            }}
+            onClick={() => adjustSeconds(-15)}
             className="flex items-center justify-center gap-1 h-12 min-h-[48px] bg-[#222228] hover:bg-[#2A2A32] text-xs font-bold rounded-xl text-gym-muted hover:text-white transition-all active:scale-95 border border-[#2A2A32]"
             title="Diminuir 15 segundos"
           >
@@ -166,21 +270,16 @@ export default function RestTimerModal({
           </button>
           <button
             type="button"
-            onClick={() => {
-              triggerHaptic(30);
-              setIsRunning(!isRunning);
-            }}
+            onClick={togglePlayPause}
             className="flex items-center justify-center gap-1.5 h-12 min-h-[48px] bg-[#222228] hover:bg-[#2A2A32] text-xs font-bold rounded-xl text-white transition-all active:scale-95 border border-[#2A2A32]"
+            title={isRunning ? 'Pausar cronômetro' : 'Continuar cronômetro'}
           >
             {isRunning ? <Pause size={15} /> : <Play size={15} />}
             <span>{isRunning ? 'Pausar' : 'Play'}</span>
           </button>
           <button
             type="button"
-            onClick={() => {
-              triggerHaptic(25);
-              setSecondsLeft(secondsLeft + 15);
-            }}
+            onClick={() => adjustSeconds(15)}
             className="flex items-center justify-center gap-1 h-12 min-h-[48px] bg-[#222228] hover:bg-[#2A2A32] text-xs font-bold rounded-xl text-gym-muted hover:text-white transition-all active:scale-95 border border-[#2A2A32]"
             title="Aumentar 15 segundos"
           >
@@ -197,6 +296,9 @@ export default function RestTimerModal({
             Pular
           </button>
         </div>
+        <p className="text-[10px] text-center text-[#71717A] font-mono mt-2">
+          💡 A tela pode desligar. O alarme tocará pontualmente ao término.
+        </p>
       </div>
     </div>
   );

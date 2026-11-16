@@ -113,6 +113,16 @@ export default function ActiveWorkout({
     return () => clearInterval(timer);
   }, []);
 
+  // Previne fechamento/recarregamento acidental durante treino ativo
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
   // Sincronização contínua com LocalStorage (Anti-queda de sinal)
   useEffect(() => {
     const sessionSnapshot = {
@@ -272,7 +282,11 @@ export default function ActiveWorkout({
           <div className="max-w-5xl mx-auto flex items-center justify-between gap-2">
             <button
               type="button"
-              onClick={onCancelWorkout}
+              onClick={() => {
+                if (window.confirm('⚠️ Tem certeza que deseja sair do treino? O progresso da sessão atual não finalizada será descartado.')) {
+                  onCancelWorkout();
+                }
+              }}
               className="flex items-center gap-1 text-xs font-bold text-[#A1A1AA] hover:text-white transition-colors py-1 px-2.5 rounded-lg hover:bg-white/[0.06]"
             >
               <ArrowLeft size={16} /> Voltar
@@ -538,26 +552,76 @@ export default function ActiveWorkout({
                         </div>
 
                         {/* Input Peso */}
-                        <div className="col-span-4">
+                        <div className="col-span-4 relative flex items-center">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic(20);
+                              const cur = Number(set.weight_kg) || 0;
+                              handleUpdateSet(exercise.id, setIdx, 'weight_kg', Math.max(0, cur - 1));
+                            }}
+                            className="w-6 h-12 flex items-center justify-center text-[#71717A] hover:text-white active:scale-90 font-mono text-sm shrink-0 select-none"
+                            title="Diminuir 1kg"
+                          >
+                            -
+                          </button>
                           <input
                             type="number"
                             step="0.5"
+                            inputMode="decimal"
                             value={set.weight_kg}
-                            placeholder="0"
+                            placeholder={lastLogs[setIdx]?.weight_kg ? String(lastLogs[setIdx].weight_kg) : "0"}
                             onChange={(e) => handleUpdateSet(exercise.id, setIdx, 'weight_kg', e.target.value)}
-                            className="w-full h-12 text-center font-bold font-mono tabular-nums text-base bg-[#121215] border border-white/[0.1] focus:border-[#FF6B00] rounded-xl text-white outline-none"
+                            className="w-full h-12 text-center font-bold font-mono tabular-nums text-base bg-[#121215] border border-white/[0.1] focus:border-[#FF6B00] rounded-xl text-white outline-none px-0.5"
                           />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic(20);
+                              const cur = Number(set.weight_kg) || (Number(lastLogs[setIdx]?.weight_kg) || 0);
+                              handleUpdateSet(exercise.id, setIdx, 'weight_kg', cur + 1);
+                            }}
+                            className="w-6 h-12 flex items-center justify-center text-[#71717A] hover:text-[#FF6B00] active:scale-90 font-mono text-sm shrink-0 select-none"
+                            title="Aumentar 1kg"
+                          >
+                            +
+                          </button>
                         </div>
 
                         {/* Input Repetições */}
-                        <div className="col-span-4">
+                        <div className="col-span-4 relative flex items-center">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic(20);
+                              const cur = Number(set.reps) || 0;
+                              handleUpdateSet(exercise.id, setIdx, 'reps', Math.max(0, cur - 1));
+                            }}
+                            className="w-6 h-12 flex items-center justify-center text-[#71717A] hover:text-white active:scale-90 font-mono text-sm shrink-0 select-none"
+                            title="Diminuir 1 rep"
+                          >
+                            -
+                          </button>
                           <input
                             type="number"
+                            inputMode="numeric"
                             value={set.reps}
                             placeholder={`${exercise.min_reps}-${exercise.max_reps}`}
                             onChange={(e) => handleUpdateSet(exercise.id, setIdx, 'reps', e.target.value)}
-                            className="w-full h-12 text-center font-bold font-mono tabular-nums text-base bg-[#121215] border border-white/[0.1] focus:border-[#FF6B00] rounded-xl text-white outline-none"
+                            className="w-full h-12 text-center font-bold font-mono tabular-nums text-base bg-[#121215] border border-white/[0.1] focus:border-[#FF6B00] rounded-xl text-white outline-none px-0.5"
                           />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic(20);
+                              const cur = Number(set.reps) || (Number(exercise.min_reps) || 8);
+                              handleUpdateSet(exercise.id, setIdx, 'reps', cur + 1);
+                            }}
+                            className="w-6 h-12 flex items-center justify-center text-[#71717A] hover:text-[#FF6B00] active:scale-90 font-mono text-sm shrink-0 select-none"
+                            title="Aumentar 1 rep"
+                          >
+                            +
+                          </button>
                         </div>
 
                         {/* Checkbox de Conclusão */}

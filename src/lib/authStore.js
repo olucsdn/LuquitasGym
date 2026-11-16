@@ -2,15 +2,19 @@
 
 const USERS_STORAGE_KEY = 'luquitasgym_registered_users';
 const CURRENT_SESSION_KEY = 'luquitasgym_auth_session';
+const LOGOUT_FLAG_KEY = 'luquitasgym_explicit_logout';
 
-// Conta oficial do Dono pré-registrada no núcleo do sistema
-export const OWNER_ACCOUNT = {
-  id: 'owner-luquitas-001',
+// Conta Pessoal do Dono (Zero fricção & Auto-inicialização)
+export const DEFAULT_PERSONAL_USER = {
+  id: 'owner-luquitas-personal',
   username: 'luquitas',
-  email: 'luquitas@luquitasgym.com',
-  password: 'eusouodono',
+  email: 'luquitas@luquitasgym.local',
   display_name: 'Lucas (Dono)',
-  role: 'admin'
+  role: 'admin',
+  user_metadata: {
+    display_name: 'Lucas (Dono)',
+    role: 'admin'
+  }
 };
 
 /**
@@ -21,21 +25,27 @@ export function getRegisteredUsers() {
     const raw = localStorage.getItem(USERS_STORAGE_KEY);
     const users = raw ? JSON.parse(raw) : [];
     
-    // Garante que a conta do Dono sempre exista no banco local
-    const hasOwner = users.some(u => u.username === OWNER_ACCOUNT.username || u.email === OWNER_ACCOUNT.email);
+    // Garante que a conta pessoal sempre exista no registro local
+    const hasOwner = users.some(u => u.username === DEFAULT_PERSONAL_USER.username);
     if (!hasOwner) {
-      users.unshift(OWNER_ACCOUNT);
+      users.unshift({
+        id: DEFAULT_PERSONAL_USER.id,
+        username: DEFAULT_PERSONAL_USER.username,
+        email: DEFAULT_PERSONAL_USER.email,
+        display_name: DEFAULT_PERSONAL_USER.display_name,
+        role: DEFAULT_PERSONAL_USER.role
+      });
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
     }
     return users;
   } catch (e) {
     console.error('Erro ao ler usuários registrados:', e);
-    return [OWNER_ACCOUNT];
+    return [DEFAULT_PERSONAL_USER];
   }
 }
 
 /**
- * Autentica usuário com validação estrita de credenciais
+ * Autentica usuário com validação de credenciais
  * @param {string} identifier - Nome de usuário ou e-mail
  * @param {string} password - Senha digitada
  */
@@ -43,34 +53,38 @@ export function authenticateLocal(identifier, password) {
   const cleanId = String(identifier || '').trim().toLowerCase();
   const cleanPass = String(password || '').trim();
 
-  if (!cleanId || !cleanPass) {
-    throw new Error('Informe o usuário/e-mail e a senha.');
+  if (!cleanId) {
+    throw new Error('Informe o usuário ou e-mail.');
+  }
+
+  // Acesso direto à conta pessoal do Dono
+  if (cleanId === 'luquitas' || cleanId === 'luquitas@luquitasgym.local' || cleanId === 'luquitas@luquitasgym.com') {
+    localStorage.removeItem(LOGOUT_FLAG_KEY);
+    localStorage.setItem(CURRENT_SESSION_KEY, JSON.stringify(DEFAULT_PERSONAL_USER));
+    return DEFAULT_PERSONAL_USER;
   }
 
   const users = getRegisteredUsers();
-  
-  // Procura por username ou email
   const user = users.find(u => 
     (u.username && u.username.toLowerCase() === cleanId) || 
     (u.email && u.email.toLowerCase() === cleanId)
   );
 
-  if (!user || user.password !== cleanPass) {
+  if (!user || (user.password && user.password !== cleanPass)) {
     throw new Error('Usuário ou senha incorretos. Caso ainda não tenha conta, clique em "Criar Conta".');
   }
 
-  // Cria objeto de sessão autenticado
   const sessionUser = {
     id: user.id,
     username: user.username,
     email: user.email,
     user_metadata: {
       display_name: user.display_name,
-      role: user.role
+      role: user.role || 'user'
     }
   };
 
-  // Salva sessão ativa
+  localStorage.removeItem(LOGOUT_FLAG_KEY);
   localStorage.setItem(CURRENT_SESSION_KEY, JSON.stringify(sessionUser));
   return sessionUser;
 }
@@ -95,7 +109,6 @@ export function registerLocal({ displayName, usernameOrEmail, password }) {
 
   const users = getRegisteredUsers();
 
-  // Verifica se já existe
   const exists = users.some(u => 
     (u.username && u.username.toLowerCase() === cleanId) || 
     (u.email && u.email.toLowerCase() === cleanId)
@@ -128,28 +141,39 @@ export function registerLocal({ displayName, usernameOrEmail, password }) {
     }
   };
 
+  localStorage.removeItem(LOGOUT_FLAG_KEY);
   localStorage.setItem(CURRENT_SESSION_KEY, JSON.stringify(sessionUser));
   return sessionUser;
 }
 
 /**
- * Recupera sessão atualmente logada (se existir)
+ * Recupera sessão ativa com Auto-Login para uso pessoal
  */
 export function getStoredSession() {
   try {
     const raw = localStorage.getItem(CURRENT_SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) {
+    if (raw) return JSON.parse(raw);
+
+    // Modo Pessoal Instantâneo:
+    // Se não há logout explícito ativo, inicializa direto a conta do Dono
+    const explicitlyLoggedOut = localStorage.getItem(LOGOUT_FLAG_KEY) === 'true';
+    if (!explicitlyLoggedOut) {
+      localStorage.setItem(CURRENT_SESSION_KEY, JSON.stringify(DEFAULT_PERSONAL_USER));
+      return DEFAULT_PERSONAL_USER;
+    }
     return null;
+  } catch (e) {
+    return DEFAULT_PERSONAL_USER;
   }
 }
 
 /**
- * Remove sessão ativa ao deslogar
+ * Remove sessão ativa ao deslogar explicitamente
  */
 export function clearStoredSession() {
   try {
     localStorage.removeItem(CURRENT_SESSION_KEY);
+    localStorage.setItem(LOGOUT_FLAG_KEY, 'true');
   } catch (e) {
     // Ignora
   }
