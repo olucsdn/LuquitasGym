@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import RestTimerModal from './RestTimerModal';
 import WarmupRampModal from './WarmupRampModal';
+import BrandLogo from './BrandLogo';
 import { getEffectiveSets, checkDoubleProgression, PHASES } from '../lib/progression';
 import { saveActiveSessionLocal, clearActiveSessionLocal } from '../lib/supabase';
 
@@ -237,16 +238,7 @@ export default function ActiveWorkout({
       <header className="sticky top-0 z-40 bg-[#09090B] border-b border-white/[0.08] shadow-xl">
         {/* Row 1: Logo com demais infos (Semana, Status) */}
         <div className="max-w-5xl mx-auto px-3 sm:px-4 h-12 sm:h-13 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#121215] border border-white/[0.12] p-0.5 flex items-center justify-center shadow-md">
-              <Dumbbell className="text-[#FF6B00]" size={15} />
-            </div>
-            <div>
-              <span className="font-black text-sm sm:text-base tracking-tight text-white flex items-center">
-                LUQUITAS<span className="text-[#FF6B00] ml-0.5">GYM</span>
-              </span>
-            </div>
-          </div>
+          <BrandLogo size="sm" showSubtitle={false} />
 
           <div className="flex items-center gap-1.5 sm:gap-2">
             {sessionDate && (

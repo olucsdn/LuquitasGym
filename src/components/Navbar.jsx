@@ -2,6 +2,7 @@ import React from 'react';
 import { Dumbbell, BarChart3, Quote, Flame, LogOut, CheckCircle2, CloudOff, Smartphone } from 'lucide-react';
 import { PHASES } from '../lib/progression';
 import { isSupabaseConfigured } from '../lib/supabase';
+import BrandLogo from './BrandLogo';
 
 export default function Navbar({
   user,
@@ -22,20 +23,9 @@ export default function Navbar({
           {/* Brand Logo */}
           <div 
             onClick={() => setActiveTab('dashboard')}
-            className="flex items-center gap-2.5 cursor-pointer group shrink-0"
+            className="cursor-pointer group shrink-0"
           >
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#121215] border border-white/[0.12] p-0.5 flex items-center justify-center shadow-lg group-hover:border-[#FF6B00]/50 transition-all">
-              <Dumbbell className="text-[#FF6B00] group-hover:scale-110 transition-transform" size={17} />
-            </div>
-            <div>
-              <span className="font-black text-base sm:text-lg tracking-tight text-white flex items-center">
-                LUQUITAS<span className="text-[#FF6B00] ml-0.5">GYM</span>
-              </span>
-              <div className="hidden sm:flex items-center gap-1.5 text-[9px] text-[#A1A1AA] -mt-1 font-mono tracking-wider">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B00] animate-pulse"></span>
-                HARDCORE TRACKER
-              </div>
-            </div>
+            <BrandLogo size="md" showSubtitle={true} />
           </div>
 
           {/* Desktop Navigation Tabs */}

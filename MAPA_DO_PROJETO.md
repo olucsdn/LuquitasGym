@@ -13,6 +13,7 @@
 | `AGENTS.md` | Protocolo Universal de Governança de Agentes, Economia de Tokens & Pipeline de 6 Fases. |
 | `PRODUCT.md` | Contexto de produto, persona hardcore, tom de voz e tabus estéticos explícitos. |
 | `DESIGN.md` | Especificação formal de tokens DTCG, paleta Preto/Branco/Laranja e ergonomia de toque. |
+| `CREDENCIAS_DONO.md` | Documentação oficial e segura da conta administrativa master (`luquitas` / `eusouodono`). |
 | `.agents/skills.json` | Manifesto de registro e descoberta de skills nativas do Antigravity CLI. |
 | `.agents/skills/` | Suíte de 10 Agent Skills prontas para execução modular nativa no workspace. |
 | `skills/` | Diretório mestre de skills curadas, orquestrador e documentação de referência. |
@@ -26,10 +27,13 @@
 | `src/main.jsx` | Ponto de entrada da aplicação React. |
 | `src/App.jsx` | Roteador e orquestrador principal de visualizações. |
 | `src/lib/supabase.js` | Cliente Supabase configurado com auth e sessão. |
+| `src/lib/authStore.js` | Repositório local seguro de autenticação obrigatória, validação e conta master do dono (`luquitas`). |
 | `src/lib/workoutData.js` | Seed data, ficha oficial de 6 dias e frases motivacionais padrão. |
 | `src/lib/progression.js` | Motor de Dupla Progressão automática e regras de fases articulares. |
-| `src/components/Navbar.jsx` | Barra superior com logo, status de nuvem/local e perfil. |
-| `src/components/AuthModal.jsx` | Tela de autenticação com feature flag e acesso do criador. |
+| `src/lib/__tests__/progression.test.js` | Suíte de testes unitários Vitest para regras de progressão e fases. |
+| `src/components/BrandLogo.jsx` | Emblema vetorial oficial de anilhas/barra e tipografia de marca minimalista. |
+| `src/components/Navbar.jsx` | Barra superior com logo oficial, status de nuvem/local e perfil. |
+| `src/components/AuthModal.jsx` | Modal de login e criação obrigatória de conta (zero bypass anônimo). |
 | `src/components/Dashboard.jsx` | Painel semanal, streak heatmap, frase do dia e seletor de fase. |
 | `src/components/ActiveWorkout.jsx` | Logger de treino ativo, rest timer, checklist articular e progressão. |
 | `src/components/RestTimerModal.jsx` | Cronômetro de descanso com frase brutal e áudio nativo. |

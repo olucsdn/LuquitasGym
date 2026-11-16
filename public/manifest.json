@@ -6,8 +6,8 @@
   "id": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0F0F12",
-  "theme_color": "#0F0F12",
+  "background_color": "#09090B",
+  "theme_color": "#09090B",
   "categories": ["fitness", "sports", "lifestyle"],
   "icons": [
     {

@@ -22,6 +22,7 @@ import {
   deleteQuote,
   processSyncQueue
 } from './lib/supabase';
+import { getStoredSession, clearStoredSession } from './lib/authStore';
 import { SYSTEM_WORKOUTS } from './lib/workoutData';
 
 export default function App() {
@@ -97,12 +98,13 @@ export default function App() {
   // Inicializa Autenticação e Sessão
   useEffect(() => {
     const initAuth = async () => {
+      let remoteUserFound = false;
       if (isSupabaseConfigured && supabase) {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
+            remoteUserFound = true;
             setUser(session.user);
-            // Busca profile no Supabase
             const { data: prof } = await supabase
               .from('profiles')
               .select('*')
@@ -116,12 +118,18 @@ export default function App() {
         }
       }
 
-      // Se não autenticado via Supabase, carrega criador local padrão
-      const savedLocal = localStorage.getItem('luquitasgym_creator_logged');
-      if (savedLocal === 'true') {
-        const localProf = getLocalProfile('local-creator');
-        setUser({ id: 'local-creator', email: 'lucas@gym.local' });
-        setProfile(localProf);
+      // Se não autenticado via Supabase, valida sessão salva estrita no authStore
+      if (!remoteUserFound) {
+        const stored = getStoredSession();
+        if (stored) {
+          setUser(stored);
+          const localProf = getLocalProfile(stored.id);
+          setProfile({
+            ...localProf,
+            display_name: stored.user_metadata?.display_name || stored.username || localProf.display_name,
+            role: stored.user_metadata?.role || localProf.role || 'user'
+          });
+        }
       }
 
       setAuthChecked(true);
@@ -156,25 +164,32 @@ export default function App() {
     loadData();
   }, [user]);
 
-  // Login com sucesso
+  // Login com sucesso (obrigatório com credenciais válidas)
   const handleLoginSuccess = (authUser) => {
     setUser(authUser);
-    localStorage.setItem('luquitasgym_creator_logged', 'true');
     const prof = getLocalProfile(authUser.id);
-    setProfile(prof);
-    showToast(`Bem-vindo ao LuquitasGym!`, 'success');
+    const mergedProf = {
+      ...prof,
+      display_name: authUser.user_metadata?.display_name || authUser.username || prof.display_name,
+      role: authUser.user_metadata?.role || prof.role || 'user'
+    };
+    saveLocalProfile(authUser.id, mergedProf);
+    setProfile(mergedProf);
+    showToast(`Bem-vindo ao LuquitasGym, ${mergedProf.display_name}!`, 'success');
   };
 
-  // Logout
+  // Logout estrito
   const handleLogout = async () => {
     if (isSupabaseConfigured && supabase) {
       await supabase.auth.signOut();
     }
+    clearStoredSession();
     localStorage.removeItem('luquitasgym_creator_logged');
     setUser(null);
     setProfile(null);
     setActiveWorkout(null);
     setActiveTab('dashboard');
+    showToast('Sessão encerrada com sucesso.', 'info');
   };
 
   // Alterar Fase Atual de Retorno
