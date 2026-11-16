@@ -129,11 +129,11 @@ export default function Dashboard({
   return (
     <div className="max-w-4xl w-full mx-auto space-y-5 sm:space-y-6 animate-fadeIn pb-12 overflow-x-hidden">
       {/* 1. Banner de Impacto (Hardcore Mindset) */}
-      <div className="bg-[#18181C] border border-[#2A2A32] border-l-4 border-l-[#F97316] rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden">
+      <div className="bg-[#121215] border border-white/[0.08] border-l-4 border-l-[#FF6B00] rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden">
         <div className="flex items-center justify-between gap-3 mb-2">
           <div className="flex items-center gap-2">
-            <Flame size={16} className="text-[#F97316]" />
-            <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-widest text-[#F97316] uppercase">
+            <Flame size={16} className="text-[#FF6B00]" />
+            <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-widest text-[#FF6B00] uppercase">
               Mentalidade Brutal • Anti-Autossabotagem
             </span>
           </div>
@@ -141,14 +141,14 @@ export default function Dashboard({
           <div className="flex items-center gap-1">
             <button
               onClick={handleShuffleQuote}
-              className="p-1.5 text-gym-muted hover:text-white rounded-lg hover:bg-[#222228] transition-colors"
+              className="p-1.5 text-[#A1A1AA] hover:text-white rounded-lg hover:bg-white/[0.06] transition-colors"
               title="Sortear outra frase"
             >
               <Shuffle size={15} />
             </button>
             <button
               onClick={onOpenQuotesManager}
-              className="p-1.5 text-gym-muted hover:text-[#10B981] rounded-lg hover:bg-[#222228] transition-colors"
+              className="p-1.5 text-[#A1A1AA] hover:text-[#FF6B00] rounded-lg hover:bg-white/[0.06] transition-colors"
               title="Adicionar ou gerenciar frases"
             >
               <Plus size={16} />
@@ -162,19 +162,19 @@ export default function Dashboard({
       </div>
 
       {/* 2. Seletor do Dia do Mês para Treinar */}
-      <div className="bg-[#18181C] border border-[#2A2A32] rounded-2xl p-4 sm:p-5 space-y-3">
+      <div className="bg-[#121215] border border-white/[0.08] rounded-2xl p-4 sm:p-5 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Calendar size={18} className="text-[#10B981]" />
+            <Calendar size={18} className="text-[#FF6B00]" />
             <h3 className="text-xs sm:text-sm font-black text-white">
               Dia do Mês para Treinar
             </h3>
             {isSelectedDayToday ? (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FF6B00]/15 text-[#FF6B00] border border-[#FF6B00]/30 font-mono">
                 Hoje (Dia {todayDateNumber})
               </span>
             ) : (
-              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#F97316]/20 text-[#F97316] border border-[#F97316]/40 animate-pulse">
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#FF6B00]/25 text-white border border-[#FF6B00]/50 animate-pulse font-mono">
                 Dia {selectedMonthDay} Selecionado
               </span>
             )}
@@ -184,7 +184,7 @@ export default function Dashboard({
             <button
               type="button"
               onClick={() => handleSelectMonthDay(todayDateNumber)}
-              className="text-xs font-bold text-[#10B981] hover:underline flex items-center gap-1"
+              className="text-xs font-bold text-[#FF6B00] hover:underline flex items-center gap-1"
             >
               Voltar para Hoje
             </button>
@@ -205,17 +205,17 @@ export default function Dashboard({
                 onClick={() => handleSelectMonthDay(day)}
                 className={`w-9 h-9 rounded-xl text-xs font-mono font-bold flex flex-col items-center justify-center shrink-0 transition-all ${
                   isSelected
-                    ? 'bg-[#10B981] text-black shadow-lg shadow-[#10B981]/30 font-black scale-105'
+                    ? 'bg-[#FF6B00] text-black shadow-lg shadow-[#FF6B00]/30 font-black scale-105'
                     : isTrained
-                    ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/40 hover:bg-[#10B981]/25'
+                    ? 'bg-[#FF6B00]/15 text-[#FF6B00] border border-[#FF6B00]/40 hover:bg-[#FF6B00]/25'
                     : isToday
-                    ? 'bg-[#222228] text-white border-2 border-[#10B981]'
-                    : 'bg-[#0F0F12] text-gym-muted hover:text-white border border-[#2A2A32]'
+                    ? 'bg-[#18181D] text-white border-2 border-[#FF6B00]'
+                    : 'bg-[#09090B] text-[#A1A1AA] hover:text-white border border-white/[0.08]'
                 }`}
                 title={`Dia ${day} do mês`}
               >
                 <span>{day}</span>
-                {isTrained && <span className="w-1 h-1 rounded-full bg-[#10B981] -mt-0.5" />}
+                {isTrained && <span className="w-1 h-1 rounded-full bg-[#FF6B00] -mt-0.5" />}
               </button>
             );
           })}
@@ -225,10 +225,10 @@ export default function Dashboard({
       {/* 3. Seletor de Ficha / Dia da Semana (Seg a Sáb) */}
       <div className="space-y-2">
         <div className="flex items-center justify-between px-1">
-          <span className="text-xs font-mono font-bold uppercase tracking-wider text-gym-muted">
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#A1A1AA]">
             Ficha para esta Sessão
           </span>
-          <span className="text-[11px] text-[#10B981] font-bold">
+          <span className="text-[11px] text-[#FF6B00] font-bold">
             {selectedWorkout.day_name} selecionada
           </span>
         </div>
@@ -245,10 +245,10 @@ export default function Dashboard({
                 onClick={() => setSelectedDayNumber(w.day_of_week)}
                 className={`py-2 px-1 rounded-xl border text-center transition-all ${
                   isSelected
-                    ? 'bg-[#10B981] text-black border-[#10B981] shadow-lg shadow-[#10B981]/25 font-black scale-[1.02]'
+                    ? 'bg-[#FF6B00] text-black border-[#FF6B00] shadow-lg shadow-[#FF6B00]/25 font-black scale-[1.02]'
                     : isToday
-                    ? 'bg-[#18181C] text-white border-[#10B981]/50 font-bold hover:border-[#10B981]'
-                    : 'bg-[#18181C] text-gym-muted hover:text-white border-[#2A2A32] font-medium'
+                    ? 'bg-[#18181D] text-white border-[#FF6B00]/50 font-bold hover:border-[#FF6B00]'
+                    : 'bg-[#121215] text-[#A1A1AA] hover:text-white border-white/[0.08] font-medium'
                 }`}
               >
                 <div className="text-[10px] sm:text-xs uppercase font-mono tracking-wider font-extrabold">
@@ -259,7 +259,7 @@ export default function Dashboard({
                 </div>
                 {isToday && (
                   <div className={`text-[8px] uppercase tracking-widest font-black ${
-                    isSelected ? 'text-black' : 'text-[#10B981]'
+                    isSelected ? 'text-black' : 'text-[#FF6B00]'
                   }`}>
                     Hoje
                   </div>
@@ -271,20 +271,20 @@ export default function Dashboard({
       </div>
 
       {/* 4. Card em Destaque do Treino Selecionado */}
-      <div className="bg-gradient-to-br from-[#18181C] to-[#222228] border-2 border-[#10B981]/50 rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-44 h-44 bg-[#10B981]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="bg-[#121215] border border-white/[0.12] rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-44 h-44 bg-[#FF6B00]/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2.5 py-0.5 bg-[#10B981] text-black text-xs font-black rounded-full uppercase tracking-wider">
+              <span className="px-2.5 py-0.5 bg-[#FF6B00] text-black text-xs font-black rounded-full uppercase tracking-wider">
                 {isSelectedDayToday ? 'Treino de Hoje' : `Treino para Dia ${selectedMonthDay}`}
               </span>
-              <span className="text-xs font-mono text-gym-muted font-bold">
+              <span className="text-xs font-mono text-[#A1A1AA] font-bold">
                 {selectedWorkout.day_name}
               </span>
               {selectedWorkout.is_optional && (
-                <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-[#F97316]/20 text-[#F97316]">
+                <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-[#FF6B00]/20 text-[#FF6B00] border border-[#FF6B00]/30">
                   Módulo Opcional
                 </span>
               )}
@@ -294,13 +294,13 @@ export default function Dashboard({
               {selectedWorkout.title}
             </h2>
 
-            <p className="text-xs sm:text-sm text-gym-muted font-medium">
+            <p className="text-xs sm:text-sm text-[#A1A1AA] font-medium">
               Data da sessão: <strong className="text-white capitalize">{selectedDateObj.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</strong> • Foco: <span className="text-white font-bold">{selectedWorkout.focus}</span> • {selectedWorkout.exercises.length} exercícios • ~{selectedWorkout.estimated_duration_min} min
             </p>
 
             {/* Status específico de fase para terça */}
             {isTuesday && (
-              <div className="text-xs font-bold text-amber-400 bg-amber-400/10 px-3 py-1.5 rounded-xl border border-amber-400/20 inline-block">
+              <div className="text-xs font-bold text-[#FF6B00] bg-[#FF6B00]/10 px-3 py-1.5 rounded-xl border border-[#FF6B00]/30 inline-block font-mono">
                 {currentPhase.tuesdayBadge}
               </div>
             )}
@@ -309,7 +309,7 @@ export default function Dashboard({
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <button
               onClick={() => handleTriggerWorkout(selectedWorkout)}
-              className="w-full sm:w-auto px-6 py-3.5 sm:py-4 bg-[#10B981] hover:bg-[#10B981]/90 text-black font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-[#10B981]/25 flex items-center justify-center gap-2.5 active:scale-95"
+              className="w-full sm:w-auto px-6 py-3.5 sm:py-4 bg-[#FF6B00] hover:bg-[#EA580C] text-black font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-[#FF6B00]/25 flex items-center justify-center gap-2.5 active:scale-95"
             >
               <Play size={18} fill="currentColor" />
               Iniciar {selectedWorkout.title} {isSelectedDayToday ? '' : `(Dia ${selectedMonthDay})`}
@@ -319,24 +319,24 @@ export default function Dashboard({
       </div>
 
       {/* 5. Calendário de Frequência (Streak & Heatmap Mensal Interativo) */}
-      <div className="bg-[#18181C] border border-[#2A2A32] rounded-2xl p-5 sm:p-6">
+      <div className="bg-[#121215] border border-white/[0.08] rounded-2xl p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <div>
             <h3 className="text-sm font-black text-white flex items-center gap-2">
-              <Calendar size={16} className="text-[#10B981]" />
+              <Calendar size={16} className="text-[#FF6B00]" />
               Frequência do Mês ({currentMonthStats.trainedDaysCount} dias treinados)
             </h3>
-            <p className="text-xs text-gym-muted mt-0.5">
+            <p className="text-xs text-[#A1A1AA] mt-0.5">
               Toque em qualquer dia para selecioná-lo e treinar ou registrar treinos retroativos.
             </p>
           </div>
 
           <div className="flex items-center gap-3 text-xs">
-            <span className="flex items-center gap-1.5 text-gym-muted">
-              <span className="w-3 h-3 rounded bg-[#10B981]"></span> Treinado
+            <span className="flex items-center gap-1.5 text-[#A1A1AA]">
+              <span className="w-3 h-3 rounded bg-[#FF6B00]"></span> Treinado
             </span>
-            <span className="flex items-center gap-1.5 text-gym-muted">
-              <span className="w-3 h-3 rounded bg-[#0F0F12] border border-[#2A2A32]"></span> Descanso
+            <span className="flex items-center gap-1.5 text-[#A1A1AA]">
+              <span className="w-3 h-3 rounded bg-[#09090B] border border-white/[0.08]"></span> Descanso
             </span>
           </div>
         </div>
@@ -355,14 +355,14 @@ export default function Dashboard({
                 onClick={() => handleSelectMonthDay(day)}
                 className={`h-11 rounded-lg flex flex-col items-center justify-center text-xs font-mono font-bold transition-all cursor-pointer ${
                   isSelected
-                    ? 'ring-2 ring-[#10B981] ring-offset-2 ring-offset-[#0F0F12] scale-105 z-10'
-                    : 'hover:border-[#10B981]/50'
+                    ? 'ring-2 ring-[#FF6B00] ring-offset-2 ring-offset-[#09090B] scale-105 z-10'
+                    : 'hover:border-[#FF6B00]/50'
                 } ${
                   isTrained
-                    ? 'bg-[#10B981] text-black shadow-md shadow-[#10B981]/20'
+                    ? 'bg-[#FF6B00] text-black shadow-md shadow-[#FF6B00]/20'
                     : isToday
-                    ? 'bg-[#18181C] text-white border-2 border-[#10B981]'
-                    : 'bg-[#0F0F12] border border-[#2A2A32] text-gym-muted'
+                    ? 'bg-[#18181D] text-white border-2 border-[#FF6B00]'
+                    : 'bg-[#09090B] border border-white/[0.08] text-[#A1A1AA]'
                 }`}
                 title={`Dia ${day}: Toque para selecionar`}
               >
@@ -370,7 +370,7 @@ export default function Dashboard({
                 {isTrained ? (
                   <CheckCircle2 size={10} className="stroke-[3]" />
                 ) : isToday ? (
-                  <span className="text-[7px] font-black uppercase tracking-tighter text-[#10B981]">Hoje</span>
+                  <span className="text-[7px] font-black uppercase tracking-tighter text-[#FF6B00]">Hoje</span>
                 ) : null}
               </button>
             );

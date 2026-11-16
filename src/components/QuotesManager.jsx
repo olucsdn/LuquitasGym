@@ -25,14 +25,14 @@ export default function QuotesManager({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header do Módulo */}
-      <div className="bg-[#18181C] border border-[#2A2A32] rounded-2xl p-6">
+      <div className="bg-[#121215] border border-white/[0.08] rounded-2xl p-6">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2.5 rounded-xl bg-[#F97316]/10 text-[#F97316]">
+          <div className="p-2.5 rounded-xl bg-[#FF6B00]/15 text-[#FF6B00]">
             <Quote size={24} />
           </div>
           <div>
             <h1 className="text-xl font-black text-white">Hardcore Mindset Engine</h1>
-            <p className="text-xs text-gym-muted">
+            <p className="text-xs text-[#A1A1AA]">
               Frases brutais exibidas no topo do app e durante o cronômetro de descanso.
             </p>
           </div>
@@ -46,19 +46,19 @@ export default function QuotesManager({
               value={newQuoteText}
               onChange={(e) => setNewQuoteText(e.target.value)}
               placeholder="Ex: Não aceite seu próprio cansaço como desculpa."
-              className="flex-1 bg-[#0F0F12] border border-[#2A2A32] focus:border-[#10B981] rounded-xl px-4 py-3 text-sm text-white placeholder-gym-muted outline-none transition-all"
+              className="flex-1 bg-[#09090B] border border-white/[0.1] focus:border-[#FF6B00] rounded-xl px-4 py-3 text-sm text-white placeholder-[#A1A1AA] outline-none transition-all"
             />
             <button
               type="submit"
               disabled={isSubmitting || !newQuoteText.trim()}
-              className="flex items-center justify-center gap-2 px-5 py-3 bg-[#10B981] hover:bg-[#10B981]/90 disabled:opacity-50 text-black font-extrabold text-sm rounded-xl transition-all shadow-lg shadow-[#10B981]/20"
+              className="flex items-center justify-center gap-2 px-5 py-3 bg-[#FF6B00] hover:bg-[#EA580C] disabled:opacity-50 text-black font-black text-sm rounded-xl transition-all shadow-lg shadow-[#FF6B00]/25 active:scale-95"
             >
               <Plus size={18} />
               Adicionar Frase
             </button>
           </div>
           {successMsg && (
-            <p className="text-xs text-[#10B981] flex items-center gap-1 mt-2 font-medium">
+            <p className="text-xs text-[#FF6B00] flex items-center gap-1 mt-2 font-medium">
               <Check size={14} /> Frase brutal registrada com sucesso!
             </p>
           )}
@@ -68,10 +68,10 @@ export default function QuotesManager({
       {/* Lista de Frases */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-2">
-          <span className="text-xs font-mono font-bold text-gym-muted uppercase tracking-wider">
+          <span className="text-xs font-mono font-bold text-[#A1A1AA] uppercase tracking-wider">
             Frases Ativas ({quotes.length})
           </span>
-          <span className="text-xs text-gym-muted">
+          <span className="text-xs text-[#A1A1AA]">
             Globais do Sistema + Pessoais
           </span>
         </div>
@@ -80,10 +80,10 @@ export default function QuotesManager({
           {quotes.map((quote) => (
             <div
               key={quote.id}
-              className={`p-4 rounded-xl border bg-[#18181C] flex items-start justify-between gap-3 transition-all ${
+              className={`p-4 rounded-xl border bg-[#121215] flex items-start justify-between gap-3 transition-all ${
                 quote.is_custom
-                  ? 'border-[#F97316]/40 hover:border-[#F97316]'
-                  : 'border-[#2A2A32] hover:border-[#3F3F46]'
+                  ? 'border-[#FF6B00]/40 hover:border-[#FF6B00]'
+                  : 'border-white/[0.08] hover:border-white/[0.16]'
               }`}
             >
               <div className="flex items-start gap-2.5">

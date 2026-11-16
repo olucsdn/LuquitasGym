@@ -1,6 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RotateCcw, X, Plus, Minus, Volume2, Flame } from 'lucide-react';
 
+// Helper de Feedback Háptico Seguro
+const triggerHaptic = (pattern = 50) => {
+  if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+    try {
+      navigator.vibrate(pattern);
+    } catch (e) {
+      // Ignora em dispositivos sem suporte a vibração
+    }
+  }
+};
+
 export default function RestTimerModal({
   isOpen,
   onClose,
@@ -31,6 +42,7 @@ export default function RestTimerModal({
     if (!isOpen || !isRunning) return;
 
     if (secondsLeft <= 0) {
+      triggerHaptic([150, 100, 250]); // Vibração dupla enérgica (alerta de bolso)
       playBeep();
       return;
     }
@@ -38,6 +50,7 @@ export default function RestTimerModal({
     const interval = setInterval(() => {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
+          triggerHaptic([150, 100, 250]); // Vibração dupla enérgica
           playBeep();
           clearInterval(interval);
           return 0;
@@ -81,13 +94,13 @@ export default function RestTimerModal({
   const progressPercent = Math.max(0, Math.min(100, (secondsLeft / initialSeconds) * 100));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-md bg-[#18181C] border border-[#2A2A32] rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+      <div className="w-full max-w-md bg-[#121215] border border-white/[0.08] rounded-2xl p-6 shadow-2xl relative overflow-hidden">
         {/* Barra de progresso no topo */}
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#2A2A32]">
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#18181D]">
           <div
             className={`h-full transition-all duration-1000 ${
-              secondsLeft === 0 ? 'bg-red-500' : 'bg-[#10B981]'
+              secondsLeft === 0 ? 'bg-red-500' : 'bg-[#FF6B00]'
             }`}
             style={{ width: `${progressPercent}%` }}
           />
@@ -96,16 +109,14 @@ export default function RestTimerModal({
         {/* Header do Timer */}
         <div className="flex items-center justify-between mt-1 mb-4">
           <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider ${
-              isCompound ? 'bg-[#F97316]/20 text-[#F97316]' : 'bg-[#10B981]/20 text-[#10B981]'
-            }`}>
+            <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider bg-[#FF6B00]/15 text-[#FF6B00] border border-[#FF6B00]/30 font-mono">
               <Flame size={12} />
               {isCompound ? 'Composto (Descanso Longo)' : 'Isolador (Descanso 90s)'}
             </span>
           </div>
           <button
             onClick={onClose}
-            className="text-gym-muted hover:text-white p-1 rounded-lg transition-colors"
+            className="text-[#A1A1AA] hover:text-white p-1 rounded-lg transition-colors"
             title="Fechar timer"
           >
             <X size={20} />
@@ -119,7 +130,7 @@ export default function RestTimerModal({
 
         {/* Display do Relógio */}
         <div className="text-center my-6">
-          <div className={`text-6xl font-black font-mono tracking-tight transition-colors ${
+          <div className={`text-6xl font-black font-mono tracking-tight tabular-nums transition-colors ${
             secondsLeft === 0 ? 'text-red-500 animate-pulse' : 'text-white'
           }`}>
             {formattedTime}
@@ -140,30 +151,48 @@ export default function RestTimerModal({
           </div>
         )}
 
-        {/* Botões de Ação Rápida */}
-        <div className="grid grid-cols-4 gap-2 mb-4">
+        {/* Botões de Ação Rápida com Touch Target Otimizado (48px) */}
+        <div className="grid grid-cols-4 gap-2.5 mb-4">
           <button
-            onClick={() => setSecondsLeft(Math.max(0, secondsLeft - 15))}
-            className="flex items-center justify-center gap-1 py-2.5 bg-[#222228] hover:bg-[#2A2A32] text-xs font-bold rounded-xl text-gym-muted hover:text-white transition-all active:scale-95"
+            type="button"
+            onClick={() => {
+              triggerHaptic(25);
+              setSecondsLeft(Math.max(0, secondsLeft - 15));
+            }}
+            className="flex items-center justify-center gap-1 h-12 min-h-[48px] bg-[#222228] hover:bg-[#2A2A32] text-xs font-bold rounded-xl text-gym-muted hover:text-white transition-all active:scale-95 border border-[#2A2A32]"
+            title="Diminuir 15 segundos"
           >
-            <Minus size={14} /> 15s
+            <Minus size={14} /> <span className="tabular-nums">15s</span>
           </button>
           <button
-            onClick={() => setIsRunning(!isRunning)}
-            className="flex items-center justify-center gap-1 py-2.5 bg-[#222228] hover:bg-[#2A2A32] text-xs font-bold rounded-xl text-white transition-all active:scale-95"
+            type="button"
+            onClick={() => {
+              triggerHaptic(30);
+              setIsRunning(!isRunning);
+            }}
+            className="flex items-center justify-center gap-1.5 h-12 min-h-[48px] bg-[#222228] hover:bg-[#2A2A32] text-xs font-bold rounded-xl text-white transition-all active:scale-95 border border-[#2A2A32]"
           >
-            {isRunning ? <Pause size={16} /> : <Play size={16} />}
-            {isRunning ? 'Pausar' : 'Continuar'}
+            {isRunning ? <Pause size={15} /> : <Play size={15} />}
+            <span>{isRunning ? 'Pausar' : 'Play'}</span>
           </button>
           <button
-            onClick={() => setSecondsLeft(secondsLeft + 15)}
-            className="flex items-center justify-center gap-1 py-2.5 bg-[#222228] hover:bg-[#2A2A32] text-xs font-bold rounded-xl text-gym-muted hover:text-white transition-all active:scale-95"
+            type="button"
+            onClick={() => {
+              triggerHaptic(25);
+              setSecondsLeft(secondsLeft + 15);
+            }}
+            className="flex items-center justify-center gap-1 h-12 min-h-[48px] bg-[#222228] hover:bg-[#2A2A32] text-xs font-bold rounded-xl text-gym-muted hover:text-white transition-all active:scale-95 border border-[#2A2A32]"
+            title="Aumentar 15 segundos"
           >
-            <Plus size={14} /> 15s
+            <Plus size={14} /> <span className="tabular-nums">15s</span>
           </button>
           <button
-            onClick={onClose}
-            className="flex items-center justify-center py-2.5 bg-[#10B981] hover:bg-[#10B981]/90 text-black font-extrabold text-xs rounded-xl transition-all active:scale-95 shadow-lg shadow-[#10B981]/20"
+            type="button"
+            onClick={() => {
+              triggerHaptic(35);
+              onClose();
+            }}
+            className="flex items-center justify-center h-12 min-h-[48px] bg-[#FF6B00] hover:bg-[#EA580C] text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all active:scale-95 shadow-lg shadow-[#FF6B00]/20"
           >
             Pular
           </button>

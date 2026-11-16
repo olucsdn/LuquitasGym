@@ -20,3 +20,13 @@
 ## 4. METODOLOGIA SDD & RISEN
 - Spec antes do código. Divida tarefas em fases numeradas (Prompt Chaining) com entregáveis verificáveis.
 - Fail-Fast: Se uma tentativa falhar 2 vezes, PARE. Não entre em loop exploratório. Reporte o bloqueio com precisão.
+
+## 5. PIPELINE DE EXECUÇÃO EM 6 FASES (AGENT SKILLS)
+- Ativação progressiva e modular via `.agents/skills/` (consulte `skills/AGENTS.md` para orquestração completa):
+  - **Fase 0 (Stack & Controle):** `agentic-awesome-orchestration` (read-only, detecção de stack).
+  - **Fase 1 (Especificação):** `real-engineer-skills` (`/grill-me`, `/to-spec`).
+  - **Fase 2 (Engenharia & TDD):** `real-engineer-skills` (`/tdd`) + `sdlc-verification-gates` (Tabela Anti-Desculpas).
+  - **Fase 3 (Design System UI):** `awesome-brand-design-systems` -> `impeccable-design-vocabulary` -> `ux-ui-design-system-gates` -> `design-taste-frontend`.
+  - **Fase 4 (Validação & E2E):** `playwright-cli-automation` + gates objetivos WCAG.
+  - **Fase 5 (Segurança & Arquitetura):** `multidisciplinary-agent-playbooks` (OWASP Top 10, Supabase RLS).
+  - **Fase 6 (Meta-Skills):** `anthropic-skill-creator` (criação e calibração de novas skills).

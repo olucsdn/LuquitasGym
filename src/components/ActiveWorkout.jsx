@@ -8,6 +8,17 @@ import WarmupRampModal from './WarmupRampModal';
 import { getEffectiveSets, checkDoubleProgression, PHASES } from '../lib/progression';
 import { saveActiveSessionLocal, clearActiveSessionLocal } from '../lib/supabase';
 
+// Helper de Feedback Háptico Seguro (Zero dependências externas)
+const triggerHaptic = (pattern = 50) => {
+  if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+    try {
+      navigator.vibrate(pattern);
+    } catch (e) {
+      // Falha silenciosa em navegadores/plataformas sem suporte
+    }
+  }
+};
+
 export default function ActiveWorkout({
   workout,
   sessionDate,
@@ -139,6 +150,7 @@ export default function ActiveWorkout({
     handleUpdateSet(exercise.id, setIndex, 'completed', willBeCompleted);
 
     if (willBeCompleted) {
+      triggerHaptic(60); // Pulso tátil de confirmação da série concluída
       // Dispara o Rest Timer automático
       setTimerState({
         isOpen: true,
@@ -146,6 +158,8 @@ export default function ActiveWorkout({
         exerciseName: exercise.name,
         isCompound: exercise.is_compound
       });
+    } else {
+      triggerHaptic(30); // Feedback curto de desmarcação
     }
   };
 
@@ -218,43 +232,41 @@ export default function ActiveWorkout({
   const isTimeClose = remainingBudgetSeconds !== null && remainingBudgetSeconds > 0 && remainingBudgetSeconds < 600; // < 10min
 
   return (
-    <div className="w-full min-h-screen bg-[#0F0F12]">
+    <div className="w-full min-h-screen bg-[#09090B]">
       {/* Top Header Unificado: Row 1 (Logo + Fase + Status) + Row 2 (Voltar + Cronômetro/Orçamento + Finalizar) */}
-      <header className="sticky top-0 z-40 bg-[#0F0F12] border-b border-[#2A2A32] shadow-xl">
+      <header className="sticky top-0 z-40 bg-[#09090B] border-b border-white/[0.08] shadow-xl">
         {/* Row 1: Logo com demais infos (Semana, Status) */}
         <div className="max-w-5xl mx-auto px-3 sm:px-4 h-12 sm:h-13 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-tr from-[#10B981] to-[#F97316] p-0.5 flex items-center justify-center shadow-md">
-              <div className="w-full h-full bg-[#18181C] rounded-[6px] flex items-center justify-center">
-                <Dumbbell className="text-[#10B981]" size={15} />
-              </div>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#121215] border border-white/[0.12] p-0.5 flex items-center justify-center shadow-md">
+              <Dumbbell className="text-[#FF6B00]" size={15} />
             </div>
             <div>
               <span className="font-black text-sm sm:text-base tracking-tight text-white flex items-center">
-                LUQUITAS<span className="text-[#10B981]">GYM</span>
+                LUQUITAS<span className="text-[#FF6B00] ml-0.5">GYM</span>
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2">
             {sessionDate && (
-              <span className="flex items-center gap-1 text-[10px] sm:text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#18181C] text-[#F97316] border border-[#F97316]/40" title="Data agendada da sessão">
+              <span className="flex items-center gap-1 text-[10px] sm:text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#121215] text-[#FF6B00] border border-[#FF6B00]/40" title="Data agendada da sessão">
                 <Calendar size={11} />
                 <span>Dia {new Date(sessionDate).getDate()}</span>
               </span>
             )}
-            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30">
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#FF6B00]/15 text-[#FF6B00] border border-[#FF6B00]/30 font-mono">
               {phaseInfo.badge}
             </span>
-            <div className="hidden xs:flex items-center gap-1.5 text-[10px] font-mono font-bold text-gym-muted bg-[#18181C] px-2 py-0.5 rounded-md border border-[#2A2A32]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse"></span>
+            <div className="hidden xs:flex items-center gap-1.5 text-[10px] font-mono font-bold text-[#A1A1AA] bg-[#121215] px-2 py-0.5 rounded-md border border-white/[0.08]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B00] animate-pulse"></span>
               TREINO ATIVO
             </div>
             {onLogout && (
               <button
                 type="button"
                 onClick={onLogout}
-                className="p-1 text-gym-muted hover:text-red-400 rounded-lg hover:bg-[#18181C] transition-colors"
+                className="p-1 text-[#A1A1AA] hover:text-red-400 rounded-lg hover:bg-white/[0.06] transition-colors"
                 title="Sair da conta"
               >
                 <LogOut size={15} />
@@ -263,13 +275,13 @@ export default function ActiveWorkout({
           </div>
         </div>
 
-        {/* Row 2: Ações de Treino (Voltar + Cronômetro / Orçamento + Finalizar) - 0px espaçamento, colado à Row 1 */}
-        <div className="border-t border-[#2A2A32] bg-[#121215] px-3 sm:px-4 py-2">
+        {/* Row 2: Ações de Treino (Voltar + Cronômetro / Orçamento + Finalizar) */}
+        <div className="border-t border-white/[0.08] bg-[#121215] px-3 sm:px-4 py-2">
           <div className="max-w-5xl mx-auto flex items-center justify-between gap-2">
             <button
               type="button"
               onClick={onCancelWorkout}
-              className="flex items-center gap-1 text-xs font-bold text-gym-muted hover:text-white transition-colors py-1 px-2 rounded-lg hover:bg-[#18181C]"
+              className="flex items-center gap-1 text-xs font-bold text-[#A1A1AA] hover:text-white transition-colors py-1 px-2.5 rounded-lg hover:bg-white/[0.06]"
             >
               <ArrowLeft size={16} /> Voltar
             </button>
@@ -279,30 +291,30 @@ export default function ActiveWorkout({
               <button
                 type="button"
                 onClick={() => setShowBudgetModal(true)}
-                className={`flex items-center gap-1 font-mono text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full border transition-all ${
+                className={`flex items-center gap-1 font-mono text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full border transition-all ${
                   timeBudgetMinutes === null
-                    ? 'bg-[#18181C] text-gym-muted border-[#2A2A32]'
+                    ? 'bg-[#18181D] text-[#A1A1AA] border-white/[0.08]'
                     : isTimeOver
                     ? 'bg-red-500/20 text-red-400 border-red-500/40 animate-pulse'
                     : isTimeClose
-                    ? 'bg-[#F97316]/20 text-[#F97316] border-[#F97316]/40'
-                    : 'bg-[#18181C] text-gym-muted hover:text-white border-[#2A2A32]'
+                    ? 'bg-[#FF6B00]/20 text-[#FF6B00] border-[#FF6B00]/40'
+                    : 'bg-[#18181D] text-[#A1A1AA] hover:text-white border-white/[0.08]'
                 }`}
                 title="Ajustar limite de tempo da sessão"
               >
-                <Hourglass size={12} className={isTimeOver ? 'text-red-400' : isTimeClose ? 'text-[#F97316]' : 'text-gym-muted'} />
+                <Hourglass size={12} className={isTimeOver ? 'text-red-400' : isTimeClose ? 'text-[#FF6B00]' : 'text-[#A1A1AA]'} />
                 {timeBudgetMinutes === null ? (
                   <span>Livre</span>
                 ) : isTimeOver ? (
-                  <span>+{formatTime(Math.abs(remainingBudgetSeconds))}</span>
+                  <span className="tabular-nums">+{formatTime(Math.abs(remainingBudgetSeconds))}</span>
                 ) : (
-                  <span>{formatTime(remainingBudgetSeconds)} restam</span>
+                  <span className="tabular-nums">{formatTime(remainingBudgetSeconds)} restam</span>
                 )}
               </button>
 
               {/* Tempo Decorrido */}
-              <div className="flex items-center gap-1 font-mono text-xs sm:text-sm font-bold bg-[#18181C] px-2.5 sm:px-3 py-1 rounded-full border border-[#2A2A32] text-white shadow-inner">
-                <Clock size={13} className="text-[#10B981] animate-spin" style={{ animationDuration: '6s' }} />
+              <div className="flex items-center gap-1 font-mono tabular-nums text-xs sm:text-sm font-bold bg-[#18181D] px-2.5 sm:px-3 py-1 rounded-full border border-white/[0.08] text-white shadow-inner">
+                <Clock size={13} className="text-[#FF6B00] animate-spin" style={{ animationDuration: '6s' }} />
                 {formatTime(elapsedSeconds)}
               </div>
 
@@ -311,7 +323,7 @@ export default function ActiveWorkout({
                 type="button"
                 onClick={handleFinish}
                 disabled={isFinishing}
-                className="flex items-center gap-1 px-3 sm:px-4 py-1.5 bg-[#10B981] hover:bg-[#10B981]/90 disabled:opacity-50 text-black font-extrabold text-xs rounded-full transition-all shadow-md shadow-[#10B981]/25 active:scale-95 shrink-0"
+                className="flex items-center gap-1 px-3.5 sm:px-4 py-1.5 bg-[#FF6B00] hover:bg-[#EA580C] disabled:opacity-50 text-black font-black text-xs rounded-full transition-all shadow-md shadow-[#FF6B00]/25 active:scale-95 shrink-0"
               >
                 <Save size={13} />
                 <span className="hidden sm:inline">{isFinishing ? 'Salvando...' : 'Finalizar Treino'}</span>
@@ -326,8 +338,8 @@ export default function ActiveWorkout({
       <div className="max-w-4xl w-full mx-auto px-3 sm:px-4 py-4 pb-24 space-y-4 sm:space-y-5 animate-fadeIn">
 
       {/* Frase Motivacional Fixa no Topo */}
-      <div className="p-4 bg-[#18181C] border-l-4 border-[#F97316] rounded-r-xl shadow-lg">
-        <div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-[#F97316] mb-1">
+      <div className="p-4 bg-[#121215] border border-white/[0.08] border-l-4 border-l-[#FF6B00] rounded-2xl shadow-lg">
+        <div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-[#FF6B00] mb-1 font-mono">
           <Flame size={12} /> Hardcore Mindset
         </div>
         <p className="text-sm md:text-base font-black italic text-white leading-snug">
@@ -336,16 +348,16 @@ export default function ActiveWorkout({
       </div>
 
       {/* Info do Treino e Badge de Fase */}
-      <div className="bg-[#18181C] border border-[#2A2A32] rounded-2xl p-5">
+      <div className="bg-[#121215] border border-white/[0.08] rounded-2xl p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <span className="text-[11px] font-mono font-bold text-[#10B981] uppercase tracking-wider">
+            <span className="text-[11px] font-mono font-bold text-[#FF6B00] uppercase tracking-wider">
               {workout.day_name} • {workout.focus}
             </span>
             <h1 className="text-2xl font-black text-white mt-0.5">{workout.title}</h1>
           </div>
           <div className="text-right">
-            <span className="inline-block text-[11px] font-bold px-3 py-1 rounded-full bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30">
+            <span className="inline-block text-[11px] font-bold px-3 py-1 rounded-full bg-[#FF6B00]/15 text-[#FF6B00] border border-[#FF6B00]/30 font-mono">
               {phaseInfo.badge}
             </span>
           </div>
@@ -364,32 +376,43 @@ export default function ActiveWorkout({
       {workout.is_upper_body && (
         <div className={`p-4 rounded-2xl border transition-all ${
           warmupDone 
-            ? 'bg-[#10B981]/10 border-[#10B981]/40' 
-            : 'bg-[#18181C] border-amber-500/40'
+            ? 'bg-[#FF6B00]/10 border-[#FF6B00]/40' 
+            : 'bg-[#121215] border-white/[0.08]'
         }`}>
           <div className="flex items-start gap-3">
             <button
-              onClick={() => setWarmupDone(!warmupDone)}
-              className="mt-0.5 text-gym-muted hover:text-white transition-colors"
+              type="button"
+              onClick={() => {
+                triggerHaptic(40);
+                setWarmupDone(!warmupDone);
+              }}
+              className="mt-0.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-[#A1A1AA] hover:text-white transition-all active:scale-90"
+              title="Alternar aquecimento articular"
             >
               {warmupDone ? (
-                <CheckCircle2 size={22} className="text-[#10B981]" />
+                <CheckCircle2 size={24} className="text-[#FF6B00]" />
               ) : (
-                <Circle size={22} className="text-amber-500 animate-pulse" />
+                <Circle size={24} className="text-[#FF6B00] animate-pulse" />
               )}
             </button>
-            <div className="flex-1 cursor-pointer" onClick={() => setWarmupDone(!warmupDone)}>
+            <div
+              className="flex-1 cursor-pointer py-1"
+              onClick={() => {
+                triggerHaptic(40);
+                setWarmupDone(!warmupDone);
+              }}
+            >
               <div className="flex items-center gap-2">
-                <ShieldCheck size={16} className={warmupDone ? 'text-[#10B981]' : 'text-amber-500'} />
+                <ShieldCheck size={16} className={warmupDone ? 'text-[#FF6B00]' : 'text-[#FF6B00]'} />
                 <h3 className="text-xs font-black uppercase tracking-wider text-white">
                   Aquecimento Articular Obrigatório de Cotovelo & Ombro
                 </h3>
               </div>
-              <p className="text-xs text-[#F4F4F5] mt-1 font-medium">
+              <p className="text-xs text-white/90 mt-1 font-medium">
                 2× 15–20 reps leves de Tríceps Corda + Rosca na Polia (super-série sem fadiga).
               </p>
               {!warmupDone && (
-                <span className="inline-block text-[10px] text-amber-400 mt-1 font-bold">
+                <span className="inline-block text-[10px] text-[#FF6B00] mt-1 font-bold">
                   ⚠️ Marque como concluído antes do primeiro exercício pesado!
                 </span>
               )}
@@ -409,26 +432,26 @@ export default function ActiveWorkout({
           return (
             <React.Fragment key={exercise.id}>
               <div
-                className="bg-[#18181C] border border-[#2A2A32] rounded-2xl p-5 shadow-lg relative overflow-hidden"
+                className="bg-[#121215] border border-white/[0.08] rounded-2xl p-5 shadow-lg relative overflow-hidden"
               >
               {/* Header do Exercício */}
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex items-start gap-3">
-                  <span className="w-7 h-7 rounded-lg bg-[#222228] border border-[#2A2A32] flex items-center justify-center text-xs font-black text-white shrink-0 mt-0.5">
+                  <span className="w-7 h-7 rounded-lg bg-[#18181D] border border-white/[0.08] flex items-center justify-center text-xs font-black text-[#FF6B00] shrink-0 mt-0.5 font-mono">
                     {exIndex + 1}
                   </span>
                   <div>
                     <h3 className="text-base font-black text-white">{exercise.name}</h3>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
-                      <span className="text-[11px] font-mono text-[#10B981] font-bold">
+                      <span className="text-[11px] font-mono text-[#FF6B00] font-bold">
                         {totalSetsCount} séries × {exercise.min_reps}–{exercise.max_reps} reps
                       </span>
-                      <span className="text-gym-border text-xs">•</span>
-                      <span className="text-[11px] text-gym-muted">
+                      <span className="text-white/20 text-xs">•</span>
+                      <span className="text-[11px] text-[#A1A1AA]">
                         Descanso: {exercise.rest_seconds || 90}s
                       </span>
                       {exercise.is_compound && (
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#F97316]/20 text-[#F97316] font-bold">
+                        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-[#FF6B00]/20 text-[#FF6B00] border border-[#FF6B00]/30 font-mono">
                           Composto
                         </span>
                       )}
@@ -447,7 +470,7 @@ export default function ActiveWorkout({
                       defaultTargetWeight: Number(firstSetWeight) || 40
                     });
                   }}
-                  className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg transition-all shrink-0 active:scale-95"
+                  className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 bg-[#FF6B00]/10 hover:bg-[#FF6B00]/20 text-[#FF6B00] border border-[#FF6B00]/30 rounded-lg transition-all shrink-0 active:scale-95"
                   title="Calcular séries preparatórias sem fadiga"
                 >
                   <Zap size={13} />
@@ -457,21 +480,21 @@ export default function ActiveWorkout({
 
               {/* Nota biomecânica */}
               {exercise.execution_notes && (
-                <p className="text-xs text-gym-muted bg-[#0F0F12] p-2.5 rounded-xl border border-[#2A2A32] mb-3 leading-relaxed">
+                <p className="text-xs text-[#A1A1AA] bg-[#09090B] p-2.5 rounded-xl border border-white/[0.08] mb-3 leading-relaxed">
                   💡 <strong className="text-white">Nota de Execução:</strong> {exercise.execution_notes}
                 </p>
               )}
 
               {/* Informação do Treino Anterior & Badge de Dupla Progressão */}
-              <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-[#0F0F12] rounded-xl border border-[#2A2A32] mb-4">
-                <div className="text-xs text-gym-muted flex items-center gap-1.5">
-                  <Dumbbell size={14} />
+              <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-[#09090B] rounded-xl border border-white/[0.08] mb-4">
+                <div className="text-xs text-[#A1A1AA] flex items-center gap-1.5">
+                  <Dumbbell size={14} className="text-[#FF6B00]" />
                   <span>Última vez: <strong className="text-white">{lastSummary}</strong></span>
                 </div>
 
                 {progression.triggered && (
-                  <div className="flex items-center gap-1 text-xs font-black text-[#10B981] bg-[#10B981]/15 px-2.5 py-1 rounded-lg border border-[#10B981]/40 animate-pulse">
-                    <Zap size={14} className="text-[#F97316]" />
+                  <div className="flex items-center gap-1 text-xs font-black text-[#FF6B00] bg-[#FF6B00]/15 px-2.5 py-1 rounded-lg border border-[#FF6B00]/40 animate-pulse">
+                    <Zap size={14} className="text-[#FF6B00]" />
                     {progression.message}
                   </div>
                 )}
@@ -479,7 +502,7 @@ export default function ActiveWorkout({
 
               {/* Tabela de Séries Mobile-First */}
               <div className="space-y-2">
-                <div className="grid grid-cols-12 gap-2 text-[11px] font-mono font-bold text-gym-muted uppercase px-2">
+                <div className="grid grid-cols-12 gap-2 text-[11px] font-mono font-bold text-[#A1A1AA] uppercase px-2">
                   <div className="col-span-2 text-center">Série</div>
                   <div className="col-span-4 text-center">Peso (kg)</div>
                   <div className="col-span-4 text-center">Reps</div>
@@ -494,25 +517,28 @@ export default function ActiveWorkout({
                       <div
                         className={`grid grid-cols-12 gap-2 items-center p-2 rounded-xl border transition-all ${
                           set.completed
-                            ? 'bg-[#10B981]/10 border-[#10B981]/40'
-                            : 'bg-[#0F0F12] border-[#2A2A32]'
+                            ? 'bg-[#FF6B00]/10 border-[#FF6B00]/40'
+                            : 'bg-[#09090B] border-white/[0.08]'
                         }`}
                       >
                         {/* Número da Série & Alternador de Tipo (Utilitário 5) */}
                         <div className="col-span-2 flex flex-col items-center justify-center">
                           <button
                             type="button"
-                            onClick={() => cycleSetType(exercise.id, setIdx)}
-                            className={`w-full py-1 rounded-md text-center transition-all ${
+                            onClick={() => {
+                              triggerHaptic(20);
+                              cycleSetType(exercise.id, setIdx);
+                            }}
+                            className={`w-full min-h-[48px] py-1 rounded-xl text-center transition-all active:scale-95 flex flex-col items-center justify-center ${
                               set.set_type === 'drop'
                                 ? 'bg-purple-500/25 text-purple-300 border border-purple-500/40 font-black'
                                 : set.set_type === 'rp'
                                 ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40 font-black'
-                                : 'text-white hover:bg-[#222228]'
+                                : 'text-white hover:bg-[#18181D] border border-transparent'
                             }`}
                             title="Toque para alternar: Normal -> Drop-set -> Rest-pause"
                           >
-                            <span className="text-xs font-black block">#{set.set_number}</span>
+                            <span className="text-xs font-black block font-mono tabular-nums">#{set.set_number}</span>
                             <span className="text-[8px] font-mono uppercase font-bold tracking-tight block">
                               {set.set_type === 'drop' ? 'DROP' : set.set_type === 'rp' ? 'RP' : 'NORM'}
                             </span>
@@ -527,7 +553,7 @@ export default function ActiveWorkout({
                             value={set.weight_kg}
                             placeholder="0"
                             onChange={(e) => handleUpdateSet(exercise.id, setIdx, 'weight_kg', e.target.value)}
-                            className="w-full h-11 text-center font-bold text-base bg-[#18181C] border border-[#2A2A32] focus:border-[#10B981] rounded-lg text-white outline-none"
+                            className="w-full h-12 text-center font-bold font-mono tabular-nums text-base bg-[#121215] border border-white/[0.1] focus:border-[#FF6B00] rounded-xl text-white outline-none"
                           />
                         </div>
 
@@ -538,7 +564,7 @@ export default function ActiveWorkout({
                             value={set.reps}
                             placeholder={`${exercise.min_reps}-${exercise.max_reps}`}
                             onChange={(e) => handleUpdateSet(exercise.id, setIdx, 'reps', e.target.value)}
-                            className="w-full h-11 text-center font-bold text-base bg-[#18181C] border border-[#2A2A32] focus:border-[#10B981] rounded-lg text-white outline-none"
+                            className="w-full h-12 text-center font-bold font-mono tabular-nums text-base bg-[#121215] border border-white/[0.1] focus:border-[#FF6B00] rounded-xl text-white outline-none"
                           />
                         </div>
 
@@ -547,13 +573,14 @@ export default function ActiveWorkout({
                           <button
                             type="button"
                             onClick={() => handleToggleSetComplete(exercise, setIdx)}
-                            className={`w-11 h-11 rounded-lg flex items-center justify-center transition-all ${
+                            className={`w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl flex items-center justify-center transition-all active:scale-95 ${
                               set.completed
-                                ? 'bg-[#10B981] text-black shadow-md shadow-[#10B981]/30 scale-105'
-                                : 'bg-[#222228] text-gym-muted hover:text-white'
+                                ? 'bg-[#FF6B00] text-black shadow-md shadow-[#FF6B00]/30 scale-105'
+                                : 'bg-[#18181D] text-[#A1A1AA] hover:text-white hover:bg-[#222228] border border-white/[0.08]'
                             }`}
+                            title={set.completed ? "Série concluída (clique para desmarcar)" : "Marcar série como concluída"}
                           >
-                            <CheckCircle2 size={22} />
+                            <CheckCircle2 size={24} />
                           </button>
                         </div>
                       </div>

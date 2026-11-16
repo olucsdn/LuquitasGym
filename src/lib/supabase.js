@@ -24,6 +24,7 @@ const STORAGE_KEYS = {
   LOCAL_HISTORY: (userId) => `luquitasgym_history_${userId || 'guest'}`,
   LOCAL_QUOTES: (userId) => `luquitasgym_quotes_${userId || 'guest'}`,
   LOCAL_PROFILE: (userId) => `luquitasgym_profile_${userId || 'guest'}`,
+  SYNC_QUEUE: (userId) => `luquitasgym_sync_queue_${userId || 'guest'}`,
 };
 
 // Carrega perfil local
@@ -156,7 +157,19 @@ export async function saveCompletedSession(userId, sessionPayload) {
         savedToRemote = true;
       }
     } catch (e) {
-      console.warn('Falha ao salvar no Supabase, mantendo no LocalStorage', e);
+      console.warn('Falha ao salvar no Supabase, enfileirando para sincronização offline', e);
+    }
+  }
+
+  // Se falhou no remoto mas temos Supabase configurado, enfileira para sincronização
+  if (!savedToRemote && isSupabaseConfigured) {
+    try {
+      const queueRaw = localStorage.getItem(STORAGE_KEYS.SYNC_QUEUE(userId));
+      const queue = queueRaw ? JSON.parse(queueRaw) : [];
+      queue.push(sessionPayload);
+      localStorage.setItem(STORAGE_KEYS.SYNC_QUEUE(userId), JSON.stringify(queue));
+    } catch (err) {
+      console.error('Erro ao adicionar sessão à fila de sincronização:', err);
     }
   }
 
@@ -182,6 +195,65 @@ export async function saveCompletedSession(userId, sessionPayload) {
 
   clearActiveSessionLocal(userId);
   return { success: true, savedToRemote };
+}
+
+// Processa fila de sincronização pendente (Acionada ao restabelecer conexão)
+export async function processSyncQueue(userId) {
+  if (!isSupabaseConfigured || !supabase || !navigator.onLine) return { synced: 0 };
+
+  try {
+    const queueRaw = localStorage.getItem(STORAGE_KEYS.SYNC_QUEUE(userId));
+    if (!queueRaw) return { synced: 0 };
+    const queue = JSON.parse(queueRaw);
+    if (!Array.isArray(queue) || queue.length === 0) return { synced: 0 };
+
+    const remaining = [];
+    let syncedCount = 0;
+
+    for (const sessionPayload of queue) {
+      try {
+        const { data: sessionData, error: sessionError } = await supabase
+          .from('workout_sessions')
+          .insert({
+            user_id: userId,
+            workout_id: sessionPayload.workout_id,
+            started_at: sessionPayload.started_at,
+            completed_at: sessionPayload.completed_at || new Date().toISOString(),
+            phase_at_time: sessionPayload.phase_at_time,
+            warmup_completed: sessionPayload.warmup_completed,
+            notes: sessionPayload.notes || ''
+          })
+          .select()
+          .single();
+
+        if (!sessionError && sessionData) {
+          const logsToInsert = sessionPayload.logs.map(log => ({
+            user_id: userId,
+            session_id: sessionData.id,
+            exercise_id: log.exercise_id,
+            set_number: log.set_number,
+            weight_kg: Number(log.weight_kg) || 0,
+            reps: Number(log.reps) || 0,
+            rir: log.rir ?? null,
+            completed: log.completed
+          }));
+
+          await supabase.from('set_logs').insert(logsToInsert);
+          syncedCount++;
+        } else {
+          remaining.push(sessionPayload);
+        }
+      } catch (err) {
+        remaining.push(sessionPayload);
+      }
+    }
+
+    localStorage.setItem(STORAGE_KEYS.SYNC_QUEUE(userId), JSON.stringify(remaining));
+    return { synced: syncedCount };
+  } catch (e) {
+    console.error('Erro ao processar fila de sincronização:', e);
+    return { synced: 0 };
+  }
 }
 
 // Frases Motivacionais (Supabase + Fallback)

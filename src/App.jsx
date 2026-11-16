@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Navbar from './components/Navbar';
 import Dashboard from './components/Dashboard';
 import ActiveWorkout from './components/ActiveWorkout';
-import Analytics from './components/Analytics';
 import QuotesManager from './components/QuotesManager';
 import PhaseSelectorModal from './components/PhaseSelectorModal';
 import AuthModal from './components/AuthModal';
+
+// Code-splitting do Analytics (Recharts carregado sob demanda para economizar >500kB no bundle inicial)
+const Analytics = React.lazy(() => import('./components/Analytics'));
 
 import { 
   supabase, 
@@ -17,7 +19,8 @@ import {
   saveCompletedSession,
   getQuotes,
   addQuote,
-  deleteQuote
+  deleteQuote,
+  processSyncQueue
 } from './lib/supabase';
 import { SYSTEM_WORKOUTS } from './lib/workoutData';
 
@@ -48,6 +51,24 @@ export default function App() {
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
   }, []);
+
+  // Sincronização automática de treinos offline ao recuperar conexão
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const triggerSync = async () => {
+      const res = await processSyncQueue(user.id);
+      if (res.synced > 0) {
+        showToast(`${res.synced} treino(s) offline sincronizado(s) com a nuvem!`, 'success');
+        const updated = await getCompletedSessions(user.id);
+        setSessions(updated);
+      }
+    };
+
+    triggerSync();
+    window.addEventListener('online', triggerSync);
+    return () => window.removeEventListener('online', triggerSync);
+  }, [user?.id]);
 
   const handleInstallApp = async () => {
     if (deferredPrompt) {
@@ -236,11 +257,11 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#0F0F12] text-[#F4F4F5] flex flex-col selection:bg-[#10B981] selection:text-black">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#09090B] text-white flex flex-col selection:bg-[#FF6B00] selection:text-white">
       {/* Toast Notificação */}
       {notification && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#18181C] border border-[#10B981] text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 animate-bounce">
-          <span className="w-2 h-2 rounded-full bg-[#10B981]" />
+        <div className="fixed bottom-6 right-6 z-50 bg-[#121215] border border-[#FF6B00] text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 animate-bounce">
+          <span className="w-2 h-2 rounded-full bg-[#FF6B00]" />
           <span className="text-xs font-bold">{notification.msg}</span>
         </div>
       )}
@@ -288,7 +309,14 @@ export default function App() {
         )}
 
         {activeTab === 'analytics' && (
-          <Analytics sessions={sessions} />
+          <Suspense fallback={
+            <div className="flex flex-col items-center justify-center p-16 text-gym-muted font-mono text-xs">
+              <span className="w-6 h-6 border-2 border-[#F97316] border-t-transparent rounded-full animate-spin mb-3" />
+              <span>Carregando gráficos de evolução...</span>
+            </div>
+          }>
+            <Analytics sessions={sessions} />
+          </Suspense>
         )}
 
         {activeTab === 'quotes' && (

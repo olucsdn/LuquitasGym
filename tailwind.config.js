@@ -9,13 +9,14 @@ export default {
     extend: {
       colors: {
         gym: {
-          dark: '#0F0F12',
-          card: '#18181C',
-          cardHover: '#222228',
-          border: '#2A2A32',
-          emerald: '#10B981',
-          orange: '#F97316',
-          text: '#F4F4F5',
+          dark: '#09090B',
+          card: '#121215',
+          cardHover: '#18181D',
+          border: '#24242B',
+          orange: '#FF6B00',
+          orangeLight: '#FF8533',
+          orangeMuted: 'rgba(255, 107, 0, 0.15)',
+          text: '#FFFFFF',
           muted: '#A1A1AA',
         }
       }

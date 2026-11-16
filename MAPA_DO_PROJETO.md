@@ -10,7 +10,12 @@
 | `public/icon-512.png` | Ícone PWA 512x512 splash screen para dispositivos móveis. |
 | `README.md` | Documentação geral, stack, guia de execução e arquitetura. |
 | `vercel.json` | Configuração de roteamento SPA e rewrites para deploy na Vercel. |
-| `AGENTS.md` | Protocolo Universal de Governança de Agentes & Economia Extrema de Tokens. |
+| `AGENTS.md` | Protocolo Universal de Governança de Agentes, Economia de Tokens & Pipeline de 6 Fases. |
+| `PRODUCT.md` | Contexto de produto, persona hardcore, tom de voz e tabus estéticos explícitos. |
+| `DESIGN.md` | Especificação formal de tokens DTCG, paleta Preto/Branco/Laranja e ergonomia de toque. |
+| `.agents/skills.json` | Manifesto de registro e descoberta de skills nativas do Antigravity CLI. |
+| `.agents/skills/` | Suíte de 10 Agent Skills prontas para execução modular nativa no workspace. |
+| `skills/` | Diretório mestre de skills curadas, orquestrador e documentação de referência. |
 | `MAPA_DO_PROJETO.md` | Inventário arquitetural e rastreamento de arquivos do repositório. |
 | `.gitignore` | Regras de exclusão do Git (node_modules, dist, .env). |
 | `HANDOFF.md` | Semáforo declarativo de concorrência multi-agente / terminais. |
